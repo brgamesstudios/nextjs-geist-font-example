@@ -275,7 +275,7 @@ html, body {
 .top-right .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 
 .speedo {
-  display: flex;
+  display: none; /* Hidden by default, shown when in vehicle */
   align-items: center;
   gap: 16px;
   background: rgba(0, 0, 0, 0.7);

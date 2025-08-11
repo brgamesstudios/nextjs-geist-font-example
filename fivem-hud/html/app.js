@@ -133,7 +133,19 @@ window.addEventListener('message', (e) => {
     // Show/hide vehicle-related UI elements
     const speedo = document.getElementById('speedo');
     if (speedo) {
-      speedo.style.display = data.inVehicle ? 'flex' : 'none';
+      if (data.inVehicle) {
+        speedo.style.display = 'flex';
+      } else {
+        speedo.style.display = 'none';
+        // Reset speedo values when exiting vehicle
+        if (speedNum) speedNum.textContent = '0';
+        if (speedGearEl) speedGearEl.textContent = 'N';
+        if (speedArc) speedArc.style.strokeDashoffset = '326';
+        if (fuelFill) fuelFill.style.height = '0%';
+        if (fuelText) fuelText.textContent = '0%';
+        if (engineFill) engineFill.style.height = '0%';
+        if (engineText) engineText.textContent = '0%';
+      }
     }
     
     // Show/hide minimap when not in vehicle (if configured)

@@ -193,6 +193,21 @@ end
 local isInVehicle = false
 local lastVehicleState = false
 
+-- Initialize vehicle state on resource start
+CreateThread(function()
+  Wait(1000) -- Wait for player to fully load
+  local ped = PlayerPedId()
+  local initialVehicleState = IsPedInAnyVehicle(ped, false)
+  isInVehicle = initialVehicleState
+  lastVehicleState = initialVehicleState
+  
+  -- Send initial vehicle state to NUI
+  SendNUIMessage({
+    action = 'vehicleStateChanged',
+    inVehicle = isInVehicle
+  })
+end)
+
 -- Main HUD update thread
 CreateThread(function()
   while true do
