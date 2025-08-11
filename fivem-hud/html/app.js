@@ -214,8 +214,8 @@ function updateVehicleStatus(data) {
 
 // Update speedometer
 function updateSpeedometer(data) {
-    // Check if player is in vehicle (either from inVehicle flag or from speed > 0)
-    const isInVehicle = data.inVehicle !== undefined ? data.inVehicle : (data.speed > 0 || data.gear > 0);
+    // Check if player is in vehicle (either from inVehicle flag or from vehicle data)
+    const isInVehicle = data.inVehicle !== undefined ? data.inVehicle : (data.speed > 0 || data.gear > 0 || data.fuel > 0 || data.engine > 0);
     if (!isInVehicle) return;
     
     console.log('Updating speedometer:', JSON.stringify(data, null, 2));
