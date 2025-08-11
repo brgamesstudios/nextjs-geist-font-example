@@ -7,6 +7,16 @@ local playerTalking = false
 local qbStress = 0
 local QBCore = nil
 
+local Prefs = {
+  MetricSpeed = Config.MetricSpeed,
+  ShowCompass = Config.ShowCompass,
+  ShowStreetZone = Config.ShowStreetZone,
+  UseVoice = Config.UseVoice,
+  UseStress = Config.UseStress,
+  UseSeatbelt = Config.UseSeatbelt,
+  UseMinimap = Config.UseMinimap,
+}
+
 -- Try to get QBCore if available
 CreateThread(function()
   if GetResourceState('qb-core') == 'started' then
@@ -22,15 +32,15 @@ CreateThread(function()
   SendNUIMessage({ action = 'setVisible', visible = isHudVisible })
   SendNUIMessage({
     action = 'config',
-    metric = Config.MetricSpeed,
+    metric = Prefs.MetricSpeed,
     speedWarn = Config.SpeedWarn,
     speedDanger = Config.SpeedDanger,
-    showCompass = Config.ShowCompass,
-    showStreetZone = Config.ShowStreetZone,
-    useVoice = Config.UseVoice,
-    useSeatbelt = Config.UseSeatbelt,
-    useStress = Config.UseStress,
-    useMinimap = Config.UseMinimap
+    showCompass = Prefs.ShowCompass,
+    showStreetZone = Prefs.ShowStreetZone,
+    useVoice = Prefs.UseVoice,
+    useSeatbelt = Prefs.UseSeatbelt,
+    useStress = Prefs.UseStress,
+    useMinimap = Prefs.UseMinimap
   })
 end)
 
@@ -66,13 +76,14 @@ if Config.UseSeatbelt and Config.SeatbeltFromQB then
   end)
 end
 
--- Toggle command and key mapping (fallback if no QB state)
+-- /hud opens settings panel
 RegisterCommand('hud', function()
-  isHudVisible = not isHudVisible
-  SendNUIMessage({ action = 'setVisible', visible = isHudVisible })
+  SetNuiFocus(true, true)
+  SendNUIMessage({ action = 'openSettings' })
 end, false)
-RegisterKeyMapping('hud', 'Toggle HUD', 'keyboard', Config.ToggleKey or 'H')
+RegisterKeyMapping('hud', 'HUD Ayarlarını Aç', 'keyboard', Config.ToggleKey or 'H')
 
+-- Manual seatbelt fallback
 RegisterCommand('seatbelt', function()
   if not (Config.UseSeatbelt and Config.SeatbeltFromQB) then
     seatbeltOn = not seatbeltOn
@@ -81,31 +92,33 @@ RegisterCommand('seatbelt', function()
 end, false)
 RegisterKeyMapping('seatbelt', 'Toggle Seatbelt', 'keyboard', 'B')
 
--- Voice state integration (basic fallback)
-if Config.UseVoice then
-  CreateThread(function()
-    while true do
-      local playerId = PlayerId()
-      playerTalking = NetworkIsPlayerTalking(playerId)
-      voiceLevel = playerTalking and 1 or 0
+-- Voice state integration (always running; UI gated by Prefs)
+CreateThread(function()
+  while true do
+    local playerId = PlayerId()
+    playerTalking = NetworkIsPlayerTalking(playerId)
+    voiceLevel = playerTalking and 1 or 0
+    if Prefs.UseVoice then
       SendNUIMessage({ action = 'voice', talking = playerTalking, level = voiceLevel })
-      Wait(150)
     end
-  end)
+    Wait(150)
+  end
+end)
 
-  -- Support for pma-voice exports if present
-  CreateThread(function()
-    if GetResourceState('pma-voice') == 'started' then
-      while true do
-        local mode = exports['pma-voice'] and exports['pma-voice']:getMode() or 2
-        voiceLevel = mode -- 1..3
-        playerTalking = MumbleIsPlayerTalking(PlayerId())
+-- pma-voice mode updates
+CreateThread(function()
+  if GetResourceState('pma-voice') == 'started' then
+    while true do
+      local mode = exports['pma-voice'] and exports['pma-voice']:getMode() or 2
+      voiceLevel = mode
+      playerTalking = MumbleIsPlayerTalking(PlayerId())
+      if Prefs.UseVoice then
         SendNUIMessage({ action = 'voice', talking = playerTalking, level = voiceLevel })
-        Wait(200)
       end
+      Wait(200)
     end
-  end)
-end
+  end
+end)
 
 -- Street/zone updater
 CreateThread(function()
@@ -119,7 +132,7 @@ CreateThread(function()
     if streetName ~= lastStreet or zoneName ~= lastZone then
       lastStreet = streetName
       lastZone = zoneName
-      if Config.ShowStreetZone then
+      if Prefs.ShowStreetZone then
         SendNUIMessage({ action = 'street', street = streetName, zone = zoneName })
       end
     end
@@ -143,8 +156,8 @@ CreateThread(function()
       local rpm = 0
       if inVehicle then
         local veh = GetVehiclePedIsIn(ped, false)
-        local speedMs = GetEntitySpeed(veh) -- m/s
-        if Config.MetricSpeed then
+        local speedMs = GetEntitySpeed(veh)
+        if Prefs.MetricSpeed then
           speed = math.floor(speedMs * 3.6 + 0.5)
         else
           speed = math.floor(speedMs * 2.236936 + 0.5)
@@ -159,7 +172,7 @@ CreateThread(function()
         action = 'tick',
         hp = hp,
         armor = armor,
-        stress = Config.UseStress and qbStress or 0,
+        stress = (Prefs.UseStress and qbStress or 0),
         inVehicle = inVehicle,
         speed = speed,
         gear = gear,
@@ -172,6 +185,49 @@ CreateThread(function()
   end
 end)
 
+-- NUI callbacks
 RegisterNUICallback('ready', function(_, cb)
+  cb('ok')
+end)
+
+RegisterNUICallback('close', function(_, cb)
+  SetNuiFocus(false, false)
+  cb('ok')
+end)
+
+RegisterNUICallback('applySettings', function(data, cb)
+  if type(data) ~= 'table' then cb('bad'); return end
+  isHudVisible = data.visible ~= nil and data.visible or isHudVisible
+  Prefs.MetricSpeed = data.metric ~= nil and data.metric or Prefs.MetricSpeed
+  Prefs.ShowCompass = data.showCompass ~= nil and data.showCompass or Prefs.ShowCompass
+  Prefs.ShowStreetZone = data.showStreetZone ~= nil and data.showStreetZone or Prefs.ShowStreetZone
+  Prefs.UseVoice = data.useVoice ~= nil and data.useVoice or Prefs.UseVoice
+  Prefs.UseStress = data.useStress ~= nil and data.useStress or Prefs.UseStress
+  Prefs.UseMinimap = data.useMinimap ~= nil and data.useMinimap or Prefs.UseMinimap
+
+  -- Reflect to UI immediately
+  SendNUIMessage({ action = 'setVisible', visible = isHudVisible })
+  SendNUIMessage({
+    action = 'config',
+    metric = Prefs.MetricSpeed,
+    speedWarn = Config.SpeedWarn,
+    speedDanger = Config.SpeedDanger,
+    showCompass = Prefs.ShowCompass,
+    showStreetZone = Prefs.ShowStreetZone,
+    useVoice = Prefs.UseVoice,
+    useSeatbelt = Prefs.UseSeatbelt,
+    useStress = Prefs.UseStress,
+    useMinimap = Prefs.UseMinimap
+  })
+
+  -- Notify minimap controller
+  TriggerEvent('fivem-hud:applyPrefs', {
+    useMinimap = Prefs.UseMinimap,
+    circleMinimap = data.circleMinimap,
+    radarOnFoot = data.radarOnFoot,
+    radarAlwaysOn = Config.RadarAlwaysOn,
+    radarZoom = Config.RadarZoom,
+  })
+
   cb('ok')
 end)

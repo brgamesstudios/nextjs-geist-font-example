@@ -10,6 +10,7 @@ Config.SeatbeltStateKey = 'seatbelt'
 Config.ShowCompass = true
 Config.ShowStreetZone = true
 Config.MetricSpeed = false        -- false = mph, true = km/h
+Config.HideDefaultHud = true      -- hide GTA default HUD elements
 
 -- Minimap
 Config.UseMinimap = true

@@ -42,6 +42,32 @@
         <!-- reserved for future stats -->
       </div>
     </div>
+
+    <div id="settings" class="settings hidden">
+      <div class="settings-card">
+        <div class="settings-header">
+          <h3>HUD Ayarları</h3>
+          <button id="btnClose" class="btn">Kapat</button>
+        </div>
+        <div class="settings-body">
+          <label><input type="checkbox" id="optVisible"> HUD Açık</label>
+          <label><input type="checkbox" id="optMetric"> KMH kullan</label>
+          <label><input type="checkbox" id="optCompass"> Pusula</label>
+          <label><input type="checkbox" id="optStreet"> Sokak/Semt</label>
+          <label><input type="checkbox" id="optVoice"> Ses Göstergesi</label>
+          <label><input type="checkbox" id="optStress"> Stres</label>
+          <label><input type="checkbox" id="optMinimap"> Minimap</label>
+          <div class="row">
+            <label><input type="checkbox" id="optCircle"> Dairesel Minimap</label>
+            <label><input type="checkbox" id="optRadarOnFoot"> Yaya iken radar</label>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button id="btnSave" class="btn primary">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="app.js"></script>
