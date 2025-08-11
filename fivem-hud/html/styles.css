@@ -204,13 +204,13 @@ html, body {
 .chip.warn { color: var(--warn); }
 .chip.danger { color: var(--danger); }
 
-.top-left {
+.top-right {
   position: absolute;
   top: 1.6vh;
-  left: 1.4vw;
+  right: 1.4vw;
   pointer-events: none;
 }
-.top-left .row { display: flex; gap: 8px; align-items: center; }
+.top-right .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 
 .speedo {
   width: 240px;
