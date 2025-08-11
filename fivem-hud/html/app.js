@@ -302,8 +302,8 @@ function saveSettings() {
 }
 
 // Event listeners
-closeSettings.addEventListener('click', closeSettings);
-saveSettings.addEventListener('click', saveSettings);
+document.getElementById('closeSettings').addEventListener('click', closeSettings);
+document.getElementById('saveSettings').addEventListener('click', saveSettings);
 
 // NUI message handler
 window.addEventListener('message', (e) => {
