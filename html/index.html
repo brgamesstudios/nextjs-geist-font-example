@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiveM Mechanic System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="app" class="hidden">
+        <!-- Main Container -->
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-wrench"></i>
+                        <span>Mechanic System</span>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="closeBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="diagnostics">
+                    <i class="fas fa-stethoscope"></i>
+                    <span>Diagnostics</span>
+                </button>
+                <button class="tab-btn" data-tab="repair">
+                    <i class="fas fa-tools"></i>
+                    <span>Repair</span>
+                </button>
+                <button class="tab-btn" data-tab="parts">
+                    <i class="fas fa-cogs"></i>
+                    <span>Parts</span>
+                </button>
+                <button class="tab-btn" data-tab="mods">
+                    <i class="fas fa-car"></i>
+                    <span>Modifications</span>
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Diagnostics Tab -->
+                <div class="tab-pane active" id="diagnostics">
+                    <div class="diagnostics-grid">
+                        <div class="diagnostic-card">
+                            <div class="card-header">
+                                <i class="fas fa-engine"></i>
+                                <h3>Engine Health</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="health-bar">
+                                    <div class="health-fill" id="engineHealth" style="width: 0%"></div>
+                                </div>
+                                <span class="health-text" id="engineHealthText">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="diagnostic-card">
+                            <div class="card-header">
+                                <i class="fas fa-car-body"></i>
+                                <h3>Body Health</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="health-bar">
+                                    <div class="health-fill" id="bodyHealth" style="width: 0%"></div>
+                                </div>
+                                <span class="health-text" id="bodyHealthText">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="diagnostic-card">
+                            <div class="card-header">
+                                <i class="fas fa-gas-pump"></i>
+                                <h3>Fuel Level</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="health-bar">
+                                    <div class="health-fill" id="fuelLevel" style="width: 0%"></div>
+                                </div>
+                                <span class="health-text" id="fuelLevelText">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="diagnostic-card">
+                            <div class="card-header">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <h3>Performance</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="health-bar">
+                                    <div class="health-fill" id="performance" style="width: 0%"></div>
+                                </div>
+                                <span class="health-text" id="performanceText">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagnostics-summary">
+                        <h3>Vehicle Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Overall Condition:</span>
+                                <span class="value" id="overallCondition">Good</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Recommended Actions:</span>
+                                <span class="value" id="recommendedActions">None</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repair Tab -->
+                <div class="tab-pane" id="repair">
+                    <div class="repair-options">
+                        <div class="repair-card">
+                            <div class="card-header">
+                                <i class="fas fa-engine"></i>
+                                <h3>Engine Repair</h3>
+                            </div>
+                            <div class="card-content">
+                                <p>Repair engine damage and restore performance</p>
+                                <div class="repair-details">
+                                    <span class="cost">$500</span>
+                                    <span class="time">15s</span>
+                                </div>
+                                <button class="btn btn-primary" data-repair="engine">
+                                    <i class="fas fa-tools"></i>
+                                    Repair Engine
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="repair-card">
+                            <div class="card-header">
+                                <i class="fas fa-car-body"></i>
+                                <h3>Body Repair</h3>
+                            </div>
+                            <div class="card-content">
+                                <p>Fix body damage and restore appearance</p>
+                                <div class="repair-details">
+                                    <span class="cost">$300</span>
+                                    <span class="time">10s</span>
+                                </div>
+                                <button class="btn btn-primary" data-repair="body">
+                                    <i class="fas fa-tools"></i>
+                                    Repair Body
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="repair-card">
+                            <div class="card-header">
+                                <i class="fas fa-circle"></i>
+                                <h3>Wheel Repair</h3>
+                            </div>
+                            <div class="card-content">
+                                <p>Fix wheel damage and restore handling</p>
+                                <div class="repair-details">
+                                    <span class="cost">$200</span>
+                                    <span class="time">8s</span>
+                                </div>
+                                <button class="btn btn-primary" data-repair="wheel">
+                                    <i class="fas fa-tools"></i>
+                                    Repair Wheels
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="repair-card">
+                            <div class="card-header">
+                                <i class="fas fa-star"></i>
+                                <h3>Full Repair</h3>
+                            </div>
+                            <div class="card-content">
+                                <p>Complete vehicle restoration</p>
+                                <div class="repair-details">
+                                    <span class="cost">$1000</span>
+                                    <span class="time">30s</span>
+                                </div>
+                                <button class="btn btn-primary" data-repair="full">
+                                    <i class="fas fa-tools"></i>
+                                    Full Repair
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parts Tab -->
+                <div class="tab-pane" id="parts">
+                    <div class="parts-header">
+                        <h3>Parts Inventory</h3>
+                        <button class="btn btn-secondary" id="buyPartsBtn">
+                            <i class="fas fa-shopping-cart"></i>
+                            Buy Parts
+                        </button>
+                    </div>
+
+                    <div class="parts-grid" id="partsGrid">
+                        <!-- Parts will be populated here -->
+                    </div>
+
+                    <div class="parts-shop hidden" id="partsShop">
+                        <h3>Parts Shop</h3>
+                        <div class="shop-items" id="shopItems">
+                            <!-- Shop items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modifications Tab -->
+                <div class="tab-pane" id="mods">
+                    <div class="mods-categories">
+                        <div class="mod-category">
+                            <h3>Performance Mods</h3>
+                            <div class="mod-options">
+                                <button class="mod-btn" data-mod="engine">
+                                    <i class="fas fa-engine"></i>
+                                    Engine Upgrade
+                                </button>
+                                <button class="mod-btn" data-mod="brakes">
+                                    <i class="fas fa-brake-system"></i>
+                                    Brake Upgrade
+                                </button>
+                                <button class="mod-btn" data-mod="transmission">
+                                    <i class="fas fa-cog"></i>
+                                    Transmission
+                                </button>
+                                <button class="mod-btn" data-mod="turbo">
+                                    <i class="fas fa-fan"></i>
+                                    Turbo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mod-category">
+                            <h3>Visual Mods</h3>
+                            <div class="mod-options">
+                                <button class="mod-btn" data-mod="bodykit">
+                                    <i class="fas fa-car-side"></i>
+                                    Body Kit
+                                </button>
+                                <button class="mod-btn" data-mod="wheels">
+                                    <i class="fas fa-circle"></i>
+                                    Wheels
+                                </button>
+                                <button class="mod-btn" data-mod="exhaust">
+                                    <i class="fas fa-exhaust"></i>
+                                    Exhaust
+                                </button>
+                                <button class="mod-btn" data-mod="spoiler">
+                                    <i class="fas fa-car-rear"></i>
+                                    Spoiler
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mod-category">
+                            <h3>Paint Options</h3>
+                            <div class="paint-options">
+                                <button class="paint-btn" data-color="red" style="background-color: #ff0000;"></button>
+                                <button class="paint-btn" data-color="blue" style="background-color: #0000ff;"></button>
+                                <button class="paint-btn" data-color="green" style="background-color: #00ff00;"></button>
+                                <button class="paint-btn" data-color="yellow" style="background-color: #ffff00;"></button>
+                                <button class="paint-btn" data-color="black" style="background-color: #000000;"></button>
+                                <button class="paint-btn" data-color="white" style="background-color: #ffffff;"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container hidden" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Repairing...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
