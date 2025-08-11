@@ -121,6 +121,16 @@ function initHUD() {
         closeSettingsBtn: !!closeSettingsBtn,
         saveSettingsBtn: !!saveSettingsBtn
     });
+    console.log('Speedometer elements:', {
+        speedo: !!speedo,
+        speed: !!speed,
+        speedArc: !!speedArc,
+        gear: !!gear,
+        fuelFill: !!fuelFill,
+        fuelText: !!fuelText,
+        engineFill: !!engineFill,
+        engineText: !!engineText
+    });
 }
 
 // Update element visibility based on preferences
@@ -207,6 +217,15 @@ function updateSpeedometer(data) {
     if (!data.inVehicle) return;
     
     console.log('Updating speedometer:', data);
+    console.log('Speedometer elements check:', {
+        speed: !!speed,
+        speedArc: !!speedArc,
+        gear: !!gear,
+        fuelFill: !!fuelFill,
+        fuelText: !!fuelText,
+        engineFill: !!engineFill,
+        engineText: !!engineText
+    });
     
     if (!speed || !speedArc || !gear || !fuelFill || !fuelText || !engineFill || !engineText) {
         console.log('Speedometer elements not found');
@@ -214,6 +233,7 @@ function updateSpeedometer(data) {
     }
     
     const speedValue = Math.round(data.speed * 3.6); // Convert to km/h
+    console.log('Speed value:', speedValue, 'km/h');
     speed.textContent = speedValue;
     
     // Update speed arc
@@ -221,16 +241,19 @@ function updateSpeedometer(data) {
     const percentage = Math.min(speedValue / maxSpeed, 1);
     const circumference = 2 * Math.PI * 50; // r=50
     const offset = circumference - (percentage * circumference);
+    console.log('Speed arc update:', { percentage, circumference, offset });
     speedArc.style.strokeDashoffset = offset;
     
     // Update gear
     gear.textContent = data.gear || 'N';
+    console.log('Gear updated:', data.gear || 'N');
     
     // Update fuel
     if (data.fuel !== undefined) {
         const fuelPercentage = Math.max(0, Math.min(100, data.fuel));
         fuelFill.style.height = fuelPercentage + '%';
         fuelText.textContent = Math.round(fuelPercentage) + '%';
+        console.log('Fuel updated:', fuelPercentage + '%');
     }
     
     // Update engine
@@ -238,6 +261,7 @@ function updateSpeedometer(data) {
         const enginePercentage = Math.max(0, Math.min(100, data.engine));
         engineFill.style.height = enginePercentage + '%';
         engineText.textContent = Math.round(enginePercentage) + '%';
+        console.log('Engine updated:', enginePercentage + '%');
     }
 }
 
