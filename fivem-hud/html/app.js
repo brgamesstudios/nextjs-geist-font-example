@@ -1,46 +1,49 @@
-const root = document.getElementById('root');
+// JG Scripts Style HUD JavaScript
+
+// Element references
+const hud = document.getElementById('hud');
+const settings = document.getElementById('settings');
+
+// Top section elements
 const compass = document.getElementById('compass');
 const street = document.getElementById('street');
 const voice = document.getElementById('voice');
-const voiceLevelText = document.getElementById('voiceLevel');
-const northIndicator = document.getElementById('northIndicator');
-const minimapFrame = document.getElementById('minimapFrame');
 
-// Minimap overlay elements
+// Top right elements
+const playerId = document.getElementById('playerId');
+const cash = document.getElementById('cash');
+const bank = document.getElementById('bank');
+const clock = document.getElementById('clock');
+
+// Minimap elements
 const minimapOverlay = document.getElementById('minimapOverlay');
+const northIndicator = document.getElementById('northIndicator');
 const minimapStreet = document.getElementById('minimapStreet');
 const minimapZone = document.getElementById('minimapZone');
 
-// top-left
-const clockEl = document.getElementById('clock');
-const playerIdEl = document.getElementById('playerId');
-const cashEl = document.getElementById('cash');
-const bankEl = document.getElementById('bank');
+// Mini rings elements
+const miniHp = document.getElementById('miniHp');
+const miniArmor = document.getElementById('miniArmor');
+const miniHunger = document.getElementById('miniHunger');
+const miniThirst = document.getElementById('miniThirst');
 
-// circular speedo
+// Large rings elements
+const hp = document.getElementById('hp');
+const armor = document.getElementById('armor');
+const hunger = document.getElementById('hunger');
+const thirst = document.getElementById('thirst');
+
+// Speedometer elements
 const speedo = document.getElementById('speedo');
-const speedArc = document.getElementById('speedArc');
-const speedNum = document.getElementById('speedNum');
-const speedUnitEl = document.getElementById('speedUnit');
-const speedGearEl = document.getElementById('speedGear');
-
-// Fuel and engine indicators
+const speed = document.getElementById('speed');
+const gear = document.getElementById('gear');
 const fuelFill = document.getElementById('fuelFill');
 const fuelText = document.getElementById('fuelText');
 const engineFill = document.getElementById('engineFill');
 const engineText = document.getElementById('engineText');
+const speedArc = document.getElementById('speedArc');
 
-// right rings
-const ringHp = document.getElementById('ringHp');
-const ringArmor = document.getElementById('ringArmor');
-const ringHunger = document.getElementById('ringHunger');
-const ringThirst = document.getElementById('ringThirst');
-const hpVal = document.getElementById('hpVal');
-const armorVal = document.getElementById('armorVal');
-const hungerVal = document.getElementById('hungerVal');
-const thirstVal = document.getElementById('thirstVal');
-
-// Enhanced element references
+// Vehicle status elements
 const seatbeltStatus = document.getElementById('seatbeltStatusBelow');
 const stressStatus = document.getElementById('stressStatusBelow');
 const stressValue = document.getElementById('stressValueBelow');
@@ -48,329 +51,321 @@ const leftIndicator = document.getElementById('leftIndicatorBelow');
 const rightIndicator = document.getElementById('rightIndicatorBelow');
 const leftIndicatorLight = document.getElementById('leftIndicatorBelow').querySelector('.indicator-light-below.left');
 const rightIndicatorLight = document.getElementById('rightIndicatorBelow').querySelector('.indicator-light-below.right');
-
-// Settings elements
-const panel = document.getElementById('settings');
-const optVisible = document.getElementById('optVisible');
-const optMetric = document.getElementById('optMetric');
-const optCompass = document.getElementById('optCompass');
-const optStreet = document.getElementById('optStreet');
-const optVoice = document.getElementById('optVoice');
-const optStress = document.getElementById('optStress');
-const optMinimap = document.getElementById('optMinimap');
-const optClock = document.getElementById('optClock');
-const optFuel = document.getElementById('optFuel');
-const optEngine = document.getElementById('optEngine');
-const optIndicators = document.getElementById('optIndicators');
-const optCircle = document.getElementById('optCircle');
-const optRadarOnFoot = document.getElementById('optRadarOnFoot');
-const btnSave = document.getElementById('btnSave');
-const btnClose = document.getElementById('btnClose');
-
 const vehicleStatusBelow = document.getElementById('vehicleStatusBelow');
 
-// Enhanced currentPrefs
+// Settings elements
+const showClock = document.getElementById('showClock');
+const showCompass = document.getElementById('showCompass');
+const showStreet = document.getElementById('showStreet');
+const showVoice = document.getElementById('showVoice');
+const showMinimap = document.getElementById('showMinimap');
+const showRings = document.getElementById('showRings');
+const showSpeedo = document.getElementById('showSpeedo');
+const showFuel = document.getElementById('showFuel');
+const showEngine = document.getElementById('showEngine');
+const showSeatbelt = document.getElementById('showSeatbelt');
+const showIndicators = document.getElementById('showIndicators');
+const radarOnFoot = document.getElementById('radarOnFoot');
+
+// Buttons
+const closeSettings = document.getElementById('closeSettings');
+const saveSettings = document.getElementById('saveSettings');
+
+// Current preferences
 let currentPrefs = {
-  visible: true,
-  metric: false,
-  showCompass: true,
-  showStreetZone: true,
-  showClock: true,
-  useVoice: true,
-  useStress: true,
-  useMinimap: true,
-  circleMinimap: true,
-  radarOnFoot: false,
-  showSeatbelt: true,
-  showIndicators: true,
-  showFuel: true,
-  showEngine: true,
+    showClock: true,
+    showCompass: true,
+    showStreet: true,
+    showVoice: true,
+    showMinimap: true,
+    showRings: true,
+    showSpeedo: true,
+    showFuel: true,
+    showEngine: true,
+    showSeatbelt: true,
+    showIndicators: true,
+    radarOnFoot: false
 };
+
+// Initialize HUD
+function initHUD() {
+    hud.style.display = 'block';
+    settings.style.display = 'none';
+    updateVisibility();
+}
+
+// Update element visibility based on preferences
+function updateVisibility() {
+    clock.style.display = currentPrefs.showClock ? 'block' : 'none';
+    compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
+    street.style.display = currentPrefs.showStreet ? 'block' : 'none';
+    voice.style.display = currentPrefs.showVoice ? 'block' : 'none';
+    minimapOverlay.style.display = currentPrefs.showMinimap ? 'block' : 'none';
+    
+    const miniRings = document.querySelector('.mini-rings');
+    const largeRings = document.querySelector('.rings');
+    miniRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
+    largeRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
+    
+    if (currentPrefs.showSpeedo) {
+        speedo.style.display = 'block';
+        vehicleStatusBelow.style.display = 'block';
+    } else {
+        speedo.style.display = 'none';
+        vehicleStatusBelow.style.display = 'none';
+    }
+    
+    const fuelIndicator = document.querySelector('.speedo-fuel');
+    const engineIndicator = document.querySelector('.speedo-engine');
+    fuelIndicator.style.display = currentPrefs.showFuel ? 'flex' : 'none';
+    engineIndicator.style.display = currentPrefs.showEngine ? 'flex' : 'none';
+    
+    if (currentPrefs.showSeatbelt || currentPrefs.showIndicators) {
+        vehicleStatusBelow.style.display = 'flex';
+    }
+}
 
 // Update vehicle status indicators
 function updateVehicleStatus(data) {
-  // Seatbelt status
-  if (data.seatbelt) {
-    seatbeltStatus.classList.add('active');
-    seatbeltStatus.classList.remove('inactive');
-  } else {
-    seatbeltStatus.classList.add('inactive');
-    seatbeltStatus.classList.remove('active');
-  }
+    // Seatbelt status
+    if (data.seatbelt) {
+        seatbeltStatus.classList.add('active');
+        seatbeltStatus.classList.remove('inactive');
+    } else {
+        seatbeltStatus.classList.add('inactive');
+        seatbeltStatus.classList.remove('active');
+    }
 
-  // Stress status
-  const stressLevel = data.stress || 0;
-  stressValue.textContent = stressLevel + '%';
-  
-  if (stressLevel < 30) {
-    stressStatus.className = 'status-item-below low';
-  } else if (stressLevel < 70) {
-    stressStatus.className = 'status-item-below medium';
-  } else {
-    stressStatus.className = 'status-item-below high';
-  }
+    // Stress status
+    const stressLevel = data.stress || 0;
+    stressValue.textContent = stressLevel + '%';
+    
+    if (stressLevel < 30) {
+        stressStatus.className = 'status-item-below low';
+    } else if (stressLevel < 70) {
+        stressStatus.className = 'status-item-below medium';
+    } else {
+        stressStatus.className = 'status-item-below high';
+    }
 
-  // Indicator lights
-  if (data.bl) {
-    leftIndicatorLight.classList.add('active');
-  } else {
-    leftIndicatorLight.classList.remove('active');
-  }
+    // Indicator lights
+    if (data.bl) {
+        leftIndicatorLight.classList.add('active');
+    } else {
+        leftIndicatorLight.classList.remove('active');
+    }
 
-  if (data.br) {
-    rightIndicatorLight.classList.add('active');
-  } else {
-    rightIndicatorLight.classList.remove('active');
-  }
+    if (data.br) {
+        rightIndicatorLight.classList.add('active');
+    } else {
+        rightIndicatorLight.classList.remove('active');
+    }
 }
 
-window.addEventListener('message', (e) => {
-  const data = e.data || {};
-  if (data.action === 'setVisible') {
-    root.classList.toggle('hidden', !data.visible);
-    currentPrefs.visible = !!data.visible;
-    if (optVisible) optVisible.checked = currentPrefs.visible;
-    return;
-  }
-  if (data.action === 'config') {
-    currentPrefs.metric = !!data.metric;
-    currentPrefs.showCompass = !!data.showCompass;
-    currentPrefs.showStreetZone = !!data.showStreetZone;
-    currentPrefs.showClock = !!data.showClock;
-    currentPrefs.useVoice = !!data.useVoice;
-    currentPrefs.useStress = !!data.useStress;
-    currentPrefs.useMinimap = !!data.useMinimap;
-    currentPrefs.radarOnFoot = !!data.radarOnFoot;
-    currentPrefs.showSeatbelt = !!data.showSeatbelt;
-    currentPrefs.showIndicators = !!data.showIndicators;
-    currentPrefs.showFuel = !!data.showFuel;
-    currentPrefs.showEngine = !!data.showEngine;
-
-    speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
-    document.getElementById('voice').style.display = currentPrefs.useVoice ? 'flex' : 'none';
-    compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
-    street.style.display = currentPrefs.showStreetZone ? 'block' : 'none';
-    if (minimapFrame) minimapFrame.style.display = currentPrefs.useMinimap ? 'block' : 'none';
-    if (minimapOverlay) minimapOverlay.style.display = currentPrefs.useMinimap ? 'flex' : 'none';
-    if (clockEl) clockEl.style.display = currentPrefs.showClock ? 'block' : 'none';
-    if (fuelFill) fuelFill.style.display = currentPrefs.showFuel ? 'block' : 'none';
-    if (engineFill) engineFill.style.display = currentPrefs.showEngine ? 'block' : 'none';
-
-    // Update vehicle status visibility
-    if (seatbeltStatus) seatbeltStatus.style.display = currentPrefs.showSeatbelt ? 'flex' : 'none';
-    if (stressStatus) stressStatus.style.display = currentPrefs.useStress ? 'flex' : 'none';
-    if (leftIndicator) leftIndicator.style.display = currentPrefs.showIndicators ? 'flex' : 'none';
-    if (rightIndicator) rightIndicator.style.display = currentPrefs.showIndicators ? 'flex' : 'none';
-
-    if (panel && !panel.classList.contains('hidden')) populateSettings();
-    return;
-  }
-  if (data.action === 'openSettings') {
-    if (panel) {
-      populateSettings();
-      panel.classList.remove('hidden');
+// Update speedometer
+function updateSpeedometer(data) {
+    if (!data.inVehicle) return;
+    
+    const speedValue = Math.round(data.speed * 3.6); // Convert to km/h
+    speed.textContent = speedValue;
+    
+    // Update speed arc
+    const maxSpeed = 200; // Max speed for arc calculation
+    const percentage = Math.min(speedValue / maxSpeed, 1);
+    const circumference = 2 * Math.PI * 50; // r=50
+    const offset = circumference - (percentage * circumference);
+    speedArc.style.strokeDashoffset = offset;
+    
+    // Update gear
+    gear.textContent = data.gear || 'N';
+    
+    // Update fuel
+    if (data.fuel !== undefined) {
+        const fuelPercentage = Math.max(0, Math.min(100, data.fuel));
+        fuelFill.style.height = fuelPercentage + '%';
+        fuelText.textContent = Math.round(fuelPercentage) + '%';
     }
-    return;
-  }
-  if (data.action === 'wallet') {
-    if (data.playerId !== undefined) playerIdEl.textContent = `${data.playerId}`;
-    if (data.cash !== undefined) cashEl.textContent = `${data.cash}`;
-    if (data.bank !== undefined) bankEl.textContent = `${data.bank}`;
-    return;
-  }
-  if (data.action === 'street') {
-    street.textContent = `${data.street} • ${data.zone}`;
-    // Update minimap overlay
-    if (minimapStreet) minimapStreet.textContent = data.street;
-    if (minimapZone) minimapZone.textContent = data.zone;
-    return;
-  }
-  if (data.action === 'minimapUpdate') {
-    // Update minimap overlay independently
-    if (minimapStreet) minimapStreet.textContent = data.street;
-    if (minimapZone) minimapZone.textContent = data.zone;
-    // Update north indicator rotation
+    
+    // Update engine
+    if (data.engine !== undefined) {
+        const enginePercentage = Math.max(0, Math.min(100, data.engine));
+        engineFill.style.height = enginePercentage + '%';
+        engineText.textContent = Math.round(enginePercentage) + '%';
+    }
+}
+
+// Update player stats
+function updatePlayerStats(data) {
+    // Update mini rings
+    if (miniHp) miniHp.textContent = Math.round(data.hp || 100);
+    if (miniArmor) miniArmor.textContent = Math.round(data.armor || 0);
+    if (miniHunger) miniHunger.textContent = Math.round(data.hunger || 100);
+    if (miniThirst) miniThirst.textContent = Math.round(data.thirst || 100);
+    
+    // Update large rings
+    if (hp) hp.textContent = Math.round(data.hp || 100);
+    if (armor) armor.textContent = Math.round(data.armor || 0);
+    if (hunger) hunger.textContent = Math.round(data.hunger || 100);
+    if (thirst) thirst.textContent = Math.round(data.thirst || 100);
+}
+
+// Update minimap
+function updateMinimap(data) {
     if (northIndicator) {
-      northIndicator.style.transform = `translateX(-50%) rotate(${data.heading || 0}deg)`;
-    }
-    return;
-  }
-  if (data.action === 'vehicleStateChanged') {
-    // Show/hide vehicle-related UI elements
-    const speedo = document.getElementById('speedo');
-    if (speedo) {
-      if (data.inVehicle) {
-        speedo.style.display = 'flex';
-      } else {
-        speedo.style.display = 'none';
-        // Reset speedo values when exiting vehicle
-        if (speedNum) speedNum.textContent = '0';
-        if (speedGearEl) speedGearEl.textContent = 'N';
-        if (speedArc) speedArc.style.strokeDashoffset = '326';
-        if (fuelFill) fuelFill.style.height = '0%';
-        if (fuelText) fuelText.textContent = '0%';
-        if (engineFill) engineFill.style.height = '0%';
-        if (engineText) engineText.textContent = '0%';
-      }
+        const heading = data.heading || 0;
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const index = Math.round(heading / 45) % 8;
+        northIndicator.textContent = directions[index];
     }
     
-    // Show/hide vehicle status indicators below speedometer
-    if (vehicleStatusBelow) {
-      vehicleStatusBelow.style.display = data.inVehicle ? 'flex' : 'none';
-    }
-    
-    // Show/hide minimap when not in vehicle (if configured)
-    if (minimapOverlay && !currentPrefs.radarOnFoot) {
-      minimapOverlay.style.display = data.inVehicle ? 'flex' : 'none';
-    }
-    return;
-  }
-  if (data.action === 'playerStats') {
-    // Update player stats (health, armor, stress, clock)
-    if (hpVal) hpVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;
-    if (armorVal) armorVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
-    
-    // Update ring visual states
-    if (ringHp) ringHp.style.setProperty('--value', `${Math.max(0, Math.min(100, data.hp || 0))}`);
-    if (ringArmor) ringArmor.style.setProperty('--value', `${Math.max(0, Math.min(100, data.armor || 0))}`);
-    
-    // Hunger and thirst placeholders (if not wired to QBCore)
-    const hun = Math.max(0, Math.min(100, Math.round(data.hunger ?? 100)));
-    const thr = Math.max(0, Math.min(100, Math.round(data.thirst ?? 100)));
-    if (hungerVal) hungerVal.textContent = `${hun}`;
-    if (thirstVal) thirstVal.textContent = `${thr}`;
-    if (ringHunger) ringHunger.style.setProperty('--value', `${hun}`);
-    if (ringThirst) ringThirst.style.setProperty('--value', `${thr}`);
-
-    // Update mini-rings as well
-    const ringHp2 = document.getElementById('ringHp2');
-    const ringArmor2 = document.getElementById('ringArmor2');
-    const ringHunger2 = document.getElementById('ringHunger2');
-    const ringThirst2 = document.getElementById('ringThirst2');
-    
-    if (ringHp2) ringHp2.style.setProperty('--value', `${Math.max(0, Math.min(100, data.hp || 0))}`);
-    if (ringArmor2) ringArmor2.style.setProperty('--value', `${Math.max(0, Math.min(100, data.armor || 0))}`);
-    if (ringHunger2) ringHunger2.style.setProperty('--value', `${hun}`);
-    if (ringThirst2) ringThirst2.style.setProperty('--value', `${thr}`);
-    
-    // Update compass and minimap north
-    const heading = data.heading || 0;
-    if (compass) compass.textContent = headingToCardinal(heading);
-    if (northIndicator) northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
-    
-    // Update minimap overlay north indicator
-    if (minimapOverlay && currentPrefs.useMinimap) {
-      const minimapNorth = minimapOverlay.querySelector('.minimap-north');
-      if (minimapNorth) {
-        minimapNorth.style.transform = `translateX(-50%) rotate(${heading}deg)`;
-      }
-    }
-
-    // Update stress status
-    if (stressStatus && stressValue && currentPrefs.useStress) {
-      const stressLevel = data.stress || 0;
-      stressValue.textContent = `${Math.round(stressLevel)}%`;
-      
-      // Update stress status colors
-      stressStatus.classList.remove('low', 'medium', 'high');
-      if (stressLevel < 30) {
-        stressStatus.classList.add('low');
-      } else if (stressLevel < 70) {
-        stressStatus.classList.add('medium');
-      } else {
-        stressStatus.classList.add('high');
-      }
-    }
-
-    // Update clock
-    if (clockEl && currentPrefs.showClock) {
-      const hh = String(data.hour ?? 0).padStart(2, '0');
-      const mm = String(data.minute ?? 0).padStart(2, '0');
-      clockEl.textContent = `${hh}:${mm}`;
-    }
-    return;
-  }
-  if (data.action === 'voice') {
-    voice.classList.toggle('talking', !!data.talking);
-    voiceLevelText.textContent = ['W','N','S','X'][Math.min(3, Math.max(0, data.level || 0))] || 'N';
-    return;
-  }
-  if (data.action === 'tick') {
-    // Speedo arc
-    speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
-    speedNum.textContent = `${data.speed || 0}`;
-    speedGearEl.textContent = data.gear === 0 ? 'N' : `${data.gear}`;
-    const maxSpeed = currentPrefs.metric ? 240 : 160; // visual cap
-    const fraction = Math.max(0, Math.min(1, (data.speed || 0) / maxSpeed));
-    const totalLen = 326;
-    speedArc.style.strokeDashoffset = `${totalLen - totalLen * fraction}`;
-
-    // Fuel and engine indicators
-    if (fuelFill && fuelText) {
-      const fuelPercent = Math.max(0, Math.min(100, data.fuel || 100));
-      fuelFill.style.height = `${fuelPercent}%`;
-      fuelText.textContent = `${Math.round(fuelPercent)}%`;
-    }
-    
-    if (engineFill && engineText) {
-      const enginePercent = Math.max(0, Math.min(100, data.engine || 100));
-      engineFill.style.height = `${enginePercent}%`;
-      engineText.textContent = `${Math.round(enginePercent)}%`;
-    }
-
-    // Update vehicle status indicators using the new function
-    updateVehicleStatus(data);
-
-    return;
-  }
-});
-
-function populateSettings() {
-  if (!panel) return;
-  optVisible.checked = !!currentPrefs.visible;
-  optMetric.checked = !!currentPrefs.metric;
-  optCompass.checked = !!currentPrefs.showCompass;
-  optStreet.checked = !!currentPrefs.showStreetZone;
-  optVoice.checked = !!currentPrefs.useVoice;
-  optStress.checked = !!currentPrefs.useStress;
-  optMinimap.checked = !!currentPrefs.useMinimap;
-  optClock.checked = !!currentPrefs.showClock;
-  optFuel.checked = !!currentPrefs.showFuel;
-  optEngine.checked = !!currentPrefs.showEngine;
-  optIndicators.checked = !!currentPrefs.showIndicators;
-  optCircle.checked = !!currentPrefs.circleMinimap;
-  optRadarOnFoot.checked = !!currentPrefs.radarOnFoot;
+    if (minimapStreet) minimapStreet.textContent = data.street || 'Unknown Street';
+    if (minimapZone) minimapZone.textContent = data.zone || 'Unknown Zone';
 }
 
-btnSave?.addEventListener('click', () => {
-  const payload = {
-    visible: !!optVisible.checked,
-    metric: !!optMetric.checked,
-    showCompass: !!optCompass.checked,
-    showStreetZone: !!optStreet.checked,
-    showClock: !!optClock.checked,
-    useVoice: !!optVoice.checked,
-    useStress: !!optStress.checked,
-    useMinimap: !!optMinimap.checked,
-    showFuel: !!optFuel.checked,
-    showEngine: !!optEngine.checked,
-    showIndicators: !!optIndicators.checked,
-    circleMinimap: !!optCircle.checked,
-    radarOnFoot: !!optRadarOnFoot.checked,
-  };
-  
-  fetch(`https://${GetParentResourceName()}/applySettings`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  
-  panel.classList.add('hidden');
+// Update wallet info
+function updateWallet(data) {
+    if (playerId) playerId.textContent = 'ID: ' + (data.id || 0);
+    if (cash) cash.textContent = '$' + (data.cash || 0).toLocaleString();
+    if (bank) bank.textContent = '$' + (data.bank || 0).toLocaleString();
+}
+
+// Update clock
+function updateClock(data) {
+    if (clock) {
+        const hour = String(data.hour || 0).padStart(2, '0');
+        const minute = String(data.minute || 0).padStart(2, '0');
+        clock.textContent = `${hour}:${minute}`;
+    }
+}
+
+// Update voice indicator
+function updateVoice(data) {
+    if (voice) {
+        if (data.talking) {
+            voice.classList.add('talking');
+        } else {
+            voice.classList.remove('talking');
+        }
+    }
+}
+
+// Settings panel functions
+function openSettings() {
+    settings.style.display = 'flex';
+    loadSettingsToUI();
+}
+
+function closeSettings() {
+    settings.style.display = 'none';
+}
+
+function loadSettingsToUI() {
+    showClock.checked = currentPrefs.showClock;
+    showCompass.checked = currentPrefs.showCompass;
+    showStreet.checked = currentPrefs.showStreet;
+    showVoice.checked = currentPrefs.showVoice;
+    showMinimap.checked = currentPrefs.showMinimap;
+    showRings.checked = currentPrefs.showRings;
+    showSpeedo.checked = currentPrefs.showSpeedo;
+    showFuel.checked = currentPrefs.showFuel;
+    showEngine.checked = currentPrefs.showEngine;
+    showSeatbelt.checked = currentPrefs.showSeatbelt;
+    showIndicators.checked = currentPrefs.showIndicators;
+    radarOnFoot.checked = currentPrefs.radarOnFoot;
+}
+
+function saveSettings() {
+    currentPrefs.showClock = showClock.checked;
+    currentPrefs.showCompass = showCompass.checked;
+    currentPrefs.showStreet = showStreet.checked;
+    currentPrefs.showVoice = showVoice.checked;
+    currentPrefs.showMinimap = showMinimap.checked;
+    currentPrefs.showRings = showRings.checked;
+    currentPrefs.showSpeedo = showSpeedo.checked;
+    currentPrefs.showFuel = showFuel.checked;
+    currentPrefs.showEngine = showEngine.checked;
+    currentPrefs.showSeatbelt = showSeatbelt.checked;
+    currentPrefs.showIndicators = showIndicators.checked;
+    currentPrefs.radarOnFoot = radarOnFoot.checked;
+    
+    updateVisibility();
+    closeSettings();
+    
+    // Send settings to Lua
+    fetch(`https://${GetParentResourceName()}/saveSettings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(currentPrefs)
+    });
+}
+
+// Event listeners
+closeSettings.addEventListener('click', closeSettings);
+saveSettings.addEventListener('click', saveSettings);
+
+// NUI message handler
+window.addEventListener('message', (e) => {
+    const data = e.data;
+    
+    switch (data.action) {
+        case 'show':
+            hud.style.display = data.show ? 'block' : 'none';
+            break;
+            
+        case 'config':
+            currentPrefs = { ...currentPrefs, ...data };
+            updateVisibility();
+            break;
+            
+        case 'vehicleStateChanged':
+            if (data.inVehicle) {
+                speedo.style.display = 'flex';
+                vehicleStatusBelow.style.display = 'flex';
+            } else {
+                speedo.style.display = 'none';
+                vehicleStatusBelow.style.display = 'none';
+            }
+            break;
+            
+        case 'tick':
+            updateSpeedometer(data);
+            updateVehicleStatus(data);
+            break;
+            
+        case 'playerStats':
+            updatePlayerStats(data);
+            break;
+            
+        case 'minimapUpdate':
+            updateMinimap(data);
+            break;
+            
+        case 'wallet':
+            updateWallet(data);
+            break;
+            
+        case 'clock':
+            updateClock(data);
+            break;
+            
+        case 'voice':
+            updateVoice(data);
+            break;
+            
+        case 'openSettings':
+            openSettings();
+            break;
+    }
 });
 
-btnClose?.addEventListener('click', () => { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); });
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); } });
+// Initialize HUD
+document.addEventListener('DOMContentLoaded', initHUD);
 
-function headingToCardinal(h) { const dirs = ['N','NE','E','SE','S','SW','W','NW','N']; const idx = Math.round(h / 45); return dirs[idx]; }
-
-window.addEventListener('DOMContentLoaded', () => { fetch(`https://fivem-hud/ready`, { method: 'POST', body: '{}' }).catch(() => {}); });
+// Close settings on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settings.style.display === 'flex') {
+        closeSettings();
+    }
+});
