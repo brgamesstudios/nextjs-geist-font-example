@@ -148,6 +148,32 @@ CreateThread(function()
   end
 end)
 
+-- Minimap overlay thread (independent of GTA minimap)
+CreateThread(function()
+  while true do
+    if Config.UseMinimap then
+      local ped = PlayerPedId()
+      local coords = GetEntityCoords(ped)
+      local heading = GetEntityHeading(ped)
+      
+      -- Get street and zone info
+      local streetHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+      local streetName = GetStreetNameFromHashKey(streetHash)
+      local zoneName = GetNameOfZone(coords.x, coords.y, coords.z)
+      
+      -- Send to NUI for minimap overlay
+      SendNUIMessage({
+        action = 'minimapUpdate',
+        street = streetName,
+        zone = zoneName,
+        heading = heading
+      })
+    end
+    
+    Wait(Config.StreetRefreshMs)
+  end
+end)
+
 local function getVehicleFuelLevel(veh)
   if QBCore and GetResourceState('qb-fuel') == 'started' then
     if exports['qb-fuel'] and exports['qb-fuel'].GetFuel then

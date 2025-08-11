@@ -6,6 +6,11 @@ const voiceLevelText = document.getElementById('voiceLevel');
 const northIndicator = document.getElementById('northIndicator');
 const minimapFrame = document.getElementById('minimapFrame');
 
+// Minimap overlay elements
+const minimapOverlay = document.getElementById('minimapOverlay');
+const minimapStreet = document.getElementById('minimapStreet');
+const minimapZone = document.getElementById('minimapZone');
+
 // top-left
 const clockEl = document.getElementById('clock');
 const playerIdEl = document.getElementById('playerId');
@@ -82,6 +87,7 @@ window.addEventListener('message', (e) => {
     compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
     street.style.display = currentPrefs.showStreetZone ? 'block' : 'none';
     if (minimapFrame) minimapFrame.style.display = currentPrefs.useMinimap ? 'block' : 'none';
+    if (minimapOverlay) minimapOverlay.style.display = currentPrefs.useMinimap ? 'flex' : 'none';
     if (clockEl) clockEl.style.display = currentPrefs.showClock ? 'block' : 'none';
 
     if (panel && !panel.classList.contains('hidden')) populateSettings();
@@ -102,6 +108,19 @@ window.addEventListener('message', (e) => {
   }
   if (data.action === 'street') {
     street.textContent = `${data.street} • ${data.zone}`;
+    // Update minimap overlay
+    if (minimapStreet) minimapStreet.textContent = data.street;
+    if (minimapZone) minimapZone.textContent = data.zone;
+    return;
+  }
+  if (data.action === 'minimapUpdate') {
+    // Update minimap overlay independently
+    if (minimapStreet) minimapStreet.textContent = data.street;
+    if (minimapZone) minimapZone.textContent = data.zone;
+    // Update north indicator rotation
+    if (northIndicator) {
+      northIndicator.style.transform = `translateX(-50%) rotate(${data.heading || 0}deg)`;
+    }
     return;
   }
   if (data.action === 'voice') {
@@ -136,6 +155,14 @@ window.addEventListener('message', (e) => {
     const heading = data.heading || 0;
     compass.textContent = headingToCardinal(heading);
     if (northIndicator) northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+    
+    // Update minimap overlay north indicator
+    if (minimapOverlay && currentPrefs.useMinimap) {
+      const minimapNorth = minimapOverlay.querySelector('.minimap-north');
+      if (minimapNorth) {
+        minimapNorth.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+      }
+    }
 
     // Clock
     if (clockEl && currentPrefs.showClock) {

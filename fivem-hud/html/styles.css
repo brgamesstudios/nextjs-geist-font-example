@@ -145,22 +145,75 @@ html, body {
 
 .minimap-frame {
   position: absolute;
-  left: 1.2vw;
-  bottom: 2.4vh;
-  width: 20.5vw;
-  height: 20.5vw;
-  max-width: 360px;
-  max-height: 360px;
-  pointer-events: none;
+  left: 2vw;
+  bottom: calc(2.4vh + 90px + 16px);
+  width: min(20.5vw, 360px);
+  height: min(20.5vw, 360px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
-.minimap-frame .north {
+
+.minimap-overlay {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.minimap-north {
   position: absolute;
-  top: -6px;
+  top: 8px;
   left: 50%;
-  transform: translateX(-50%) rotate(0deg);
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+.minimap-center {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  z-index: 5;
+}
+
+.minimap-street {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  max-width: 80%;
+  z-index: 10;
+}
+
+.minimap-zone {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ccc;
+  font-size: 10px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  max-width: 80%;
+  z-index: 10;
 }
 
 .settings.hidden { display: none; }
