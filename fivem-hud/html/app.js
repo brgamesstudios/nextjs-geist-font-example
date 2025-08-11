@@ -115,13 +115,13 @@ function initHUD() {
     }
     
     console.log('HUD initialized successfully');
-    console.log('Element references:', {
+    console.log('Element references:', JSON.stringify({
         hud: !!hud,
         settings: !!settings,
         closeSettingsBtn: !!closeSettingsBtn,
         saveSettingsBtn: !!saveSettingsBtn
-    });
-    console.log('Speedometer elements:', {
+    }, null, 2));
+    console.log('Speedometer elements:', JSON.stringify({
         speedo: !!speedo,
         speed: !!speed,
         speedArc: !!speedArc,
@@ -130,12 +130,12 @@ function initHUD() {
         fuelText: !!fuelText,
         engineFill: !!engineFill,
         engineText: !!engineText
-    });
+    }, null, 2));
 }
 
 // Update element visibility based on preferences
 function updateVisibility() {
-    console.log('Updating visibility with prefs:', currentPrefs);
+    console.log('Updating visibility with prefs:', JSON.stringify(currentPrefs, null, 2));
     
     if (clock) clock.style.display = currentPrefs.showClock ? 'block' : 'none';
     if (compass) compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
