@@ -89,29 +89,44 @@ let currentPrefs = {
 
 // Initialize HUD
 function initHUD() {
+    console.log('Initializing HUD...');
+    
     // Ensure all elements are loaded
     if (!hud || !settings) {
         console.error('HUD elements not found');
         return;
     }
     
+    console.log('HUD elements found, setting display...');
     hud.style.display = 'block';
     settings.style.display = 'none';
+    
+    console.log('Updating visibility...');
     updateVisibility();
     
     // Add event listeners after DOM is ready
     if (closeSettingsBtn) {
         closeSettingsBtn.addEventListener('click', closeSettings);
+        console.log('Close button event listener added');
     }
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', saveSettings);
+        console.log('Save button event listener added');
     }
     
     console.log('HUD initialized successfully');
+    console.log('Element references:', {
+        hud: !!hud,
+        settings: !!settings,
+        closeSettingsBtn: !!closeSettingsBtn,
+        saveSettingsBtn: !!saveSettingsBtn
+    });
 }
 
 // Update element visibility based on preferences
 function updateVisibility() {
+    console.log('Updating visibility with prefs:', currentPrefs);
+    
     if (clock) clock.style.display = currentPrefs.showClock ? 'block' : 'none';
     if (compass) compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
     if (street) street.style.display = currentPrefs.showStreet ? 'block' : 'none';
@@ -139,10 +154,19 @@ function updateVisibility() {
     if (currentPrefs.showSeatbelt || currentPrefs.showIndicators) {
         if (vehicleStatusBelow) vehicleStatusBelow.style.display = 'flex';
     }
+    
+    console.log('Visibility update completed');
 }
 
 // Update vehicle status indicators
 function updateVehicleStatus(data) {
+    console.log('Updating vehicle status:', data);
+    
+    if (!seatbeltStatus || !stressStatus || !stressValue || !leftIndicatorLight || !rightIndicatorLight) {
+        console.log('Vehicle status elements not found');
+        return;
+    }
+    
     // Seatbelt status
     if (data.seatbelt) {
         seatbeltStatus.classList.add('active');
@@ -182,6 +206,13 @@ function updateVehicleStatus(data) {
 function updateSpeedometer(data) {
     if (!data.inVehicle) return;
     
+    console.log('Updating speedometer:', data);
+    
+    if (!speed || !speedArc || !gear || !fuelFill || !fuelText || !engineFill || !engineText) {
+        console.log('Speedometer elements not found');
+        return;
+    }
+    
     const speedValue = Math.round(data.speed * 3.6); // Convert to km/h
     speed.textContent = speedValue;
     
@@ -212,6 +243,8 @@ function updateSpeedometer(data) {
 
 // Update player stats
 function updatePlayerStats(data) {
+    console.log('Updating player stats:', data);
+    
     // Update mini rings
     if (miniHp) miniHp.textContent = Math.round(data.hp || 100);
     if (miniArmor) miniArmor.textContent = Math.round(data.armor || 0);
@@ -227,6 +260,8 @@ function updatePlayerStats(data) {
 
 // Update minimap
 function updateMinimap(data) {
+    console.log('Updating minimap:', data);
+    
     if (northIndicator) {
         const heading = data.heading || 0;
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -240,13 +275,17 @@ function updateMinimap(data) {
 
 // Update wallet info
 function updateWallet(data) {
+    console.log('Updating wallet:', data);
+    
     if (playerId) playerId.textContent = 'ID: ' + (data.id || 0);
-    if (cash) cash.textContent = '$' + (data.cash || 0).toLocaleString();
+    if (cash) cash.textContent = '$' + (data.bank || 0).toLocaleString();
     if (bank) bank.textContent = '$' + (data.bank || 0).toLocaleString();
 }
 
 // Update clock
 function updateClock(data) {
+    console.log('Updating clock:', data);
+    
     if (clock) {
         const hour = String(data.hour || 0).padStart(2, '0');
         const minute = String(data.minute || 0).padStart(2, '0');
@@ -256,6 +295,8 @@ function updateClock(data) {
 
 // Update voice indicator
 function updateVoice(data) {
+    console.log('Updating voice:', data);
+    
     if (voice) {
         if (data.talking) {
             voice.classList.add('talking');
@@ -326,6 +367,7 @@ function saveSettings() {
 // NUI message handler
 window.addEventListener('message', (e) => {
     const data = e.data;
+    console.log('NUI Message received:', data.action, data);
     
     switch (data.action) {
         case 'show':
@@ -374,6 +416,10 @@ window.addEventListener('message', (e) => {
             
         case 'openSettings':
             openSettings();
+            break;
+            
+        default:
+            console.log('Unknown action:', data.action);
             break;
     }
 });
