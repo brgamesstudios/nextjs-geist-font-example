@@ -1,582 +1,301 @@
-local ESX = nil
-local PlayerData = {}
-local isNearMechanic = false
-local currentVehicle = nil
-local isRepairing = false
+local ESX = exports['es_extended']:getSharedObject()
+local Utils = require 'shared/utils'
+
+local uiOpen = false
+local lastVehicle = 0
 local currentLift = nil
 
--- ESX Initialization
-Citizen.CreateThread(function()
-    while ESX == nil do
-        TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-        Citizen.Wait(0)
+local function notify(message)
+    if Config.NotificationType == 'esx' then
+        ESX.ShowNotification(message)
+    else
+        TriggerEvent('chat:addMessage', { args = { '[Mechanic]', message } })
     end
+end
 
-    while ESX.GetPlayerData().job == nil do
-        Citizen.Wait(10)
-    end
+local function drawMarkerAt(markerCfg, coords)
+    DrawMarker(
+        markerCfg.type or 1,
+        coords.x, coords.y, coords.z - 1.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        (markerCfg.scale and markerCfg.scale.x) or 1.0,
+        (markerCfg.scale and markerCfg.scale.y) or 1.0,
+        (markerCfg.scale and markerCfg.scale.z) or 1.0,
+        (markerCfg.color and markerCfg.color.r) or 0,
+        (markerCfg.color and markerCfg.color.g) or 150,
+        (markerCfg.color and markerCfg.color.b) or 255,
+        (markerCfg.color and markerCfg.color.a) or 150,
+        false, false, 2, false, nil, nil, false
+    )
+end
 
-    PlayerData = ESX.GetPlayerData()
-end)
-
--- Update player data when job changes
-RegisterNetEvent('esx:setJob')
-AddEventHandler('esx:setJob', function(job)
-    PlayerData.job = job
-end)
-
--- Main Thread
-Citizen.CreateThread(function()
-    -- Create blips
-    CreateBlips()
-    
-    while true do
-        Citizen.Wait(0)
-        local playerPed = PlayerPedId()
-        local playerCoords = GetEntityCoords(playerPed)
-        
-        -- Check if player is near mechanic shop
-        local distance = #(playerCoords - Config.Locations.mainShop.coords)
-        if distance < 50.0 then
-            DrawMarkers()
-            CheckInteractions(playerPed, playerCoords)
-        end
-        
-        -- Check lift interactions
-        CheckLiftInteractions(playerPed, playerCoords)
-        
-        -- Check parts storage
-        CheckPartsStorage(playerPed, playerCoords)
-    end
-end)
-
--- Create Blips
-function CreateBlips()
-    local blip = AddBlipForCoord(Config.Locations.mainShop.coords.x, Config.Locations.mainShop.coords.y, Config.Locations.mainShop.coords.z)
-    SetBlipSprite(blip, Config.Locations.mainShop.blip.sprite)
-    SetBlipDisplay(blip, 4)
-    SetBlipScale(blip, Config.Locations.mainShop.blip.scale)
-    SetBlipColour(blip, Config.Locations.mainShop.blip.color)
+local function createBlip(cfg)
+    local blip = AddBlipForCoord(cfg.coords.x, cfg.coords.y, cfg.coords.z)
+    SetBlipSprite(blip, (cfg.blip and cfg.blip.sprite) or 402)
+    SetBlipScale(blip, (cfg.blip and cfg.blip.scale) or 0.8)
+    SetBlipColour(blip, (cfg.blip and cfg.blip.color) or 3)
     SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentString(Config.Locations.mainShop.blip.name)
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentString((cfg.blip and cfg.blip.name) or 'Mechanic')
     EndTextCommandSetBlipName(blip)
 end
 
--- Draw Markers
-function DrawMarkers()
-    -- Main shop marker
-    DrawMarker(
-        Config.Locations.mainShop.marker.type,
-        Config.Locations.mainShop.coords.x, Config.Locations.mainShop.coords.y, Config.Locations.mainShop.coords.z - 1.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        Config.Locations.mainShop.marker.size.x, Config.Locations.mainShop.marker.size.y, Config.Locations.mainShop.marker.size.z,
-        Config.Locations.mainShop.marker.color.r, Config.Locations.mainShop.marker.color.g, Config.Locations.mainShop.marker.color.b, Config.Locations.mainShop.marker.color.a,
-        false, true, 2, false, nil, nil, false
-    )
-    
-    -- Parts storage marker
-    DrawMarker(
-        Config.Locations.partsStorage.marker.type,
-        Config.Locations.partsStorage.coords.x, Config.Locations.partsStorage.coords.y, Config.Locations.partsStorage.coords.z - 1.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        Config.Locations.partsStorage.marker.size.x, Config.Locations.partsStorage.marker.size.y, Config.Locations.partsStorage.marker.size.z,
-        Config.Locations.partsStorage.marker.color.r, Config.Locations.partsStorage.marker.color.g, Config.Locations.partsStorage.marker.color.b, Config.Locations.partsStorage.marker.color.a,
-        false, true, 2, false, nil, nil, false
-    )
-end
-
--- Check Interactions
-function CheckInteractions(playerPed, playerCoords)
-    local distance = #(playerCoords - Config.Locations.mainShop.coords)
-    
-    if distance < 2.0 then
-        ESX.ShowHelpNotification("Press ~INPUT_CONTEXT~ to access mechanic menu")
-        
-        if IsControlJustReleased(0, 38) then -- E key
-            OpenMechanicMenu()
+local function getClosestVehicle(coords, radius)
+    local vehicles = GetGamePool('CVehicle')
+    local closest, closestDist = 0, radius or 5.0
+    for _, veh in ipairs(vehicles) do
+        local vehCoords = GetEntityCoords(veh)
+        local dist = #(vehCoords - coords)
+        if dist < closestDist then
+            closest = veh
+            closestDist = dist
         end
     end
+    return closest
 end
 
--- Check Lift Interactions
-function CheckLiftInteractions(playerPed, playerCoords)
-    for i, lift in ipairs(Config.Locations.lifts) do
-        local distance = #(playerCoords - lift.coords)
-        
-        if distance < 3.0 then
-            if not lift.inUse then
-                ESX.ShowHelpNotification("Press ~INPUT_CONTEXT~ to use lift")
-                
-                if IsControlJustReleased(0, 38) then -- E key
-                    UseLift(i)
-                end
-            else
-                ESX.ShowHelpNotification("Lift is currently in use")
-            end
-        end
-    end
+local function getPlayerJob()
+    local xPlayer = ESX.GetPlayerData()
+    return (xPlayer and xPlayer.job) or { name = 'unemployed', grade = 0 }
 end
 
--- Check Parts Storage
-function CheckPartsStorage(playerPed, playerCoords)
-    local distance = #(playerCoords - Config.Locations.partsStorage.coords)
-    
-    if distance < 2.0 then
-        ESX.ShowHelpNotification("Press ~INPUT_CONTEXT~ to access parts storage")
-        
-        if IsControlJustReleased(0, 38) then -- E key
-            OpenPartsStorage()
-        end
-    end
+local function isMechanic()
+    local job = getPlayerJob()
+    return Utils.hasMechanicJob(job.name, job.grade)
 end
 
--- Use Lift
-function UseLift(liftIndex)
-    if not Config.RequireJob or PlayerData.job.name == Config.MechanicJob then
-        local lift = Config.Locations.lifts[liftIndex]
-        local playerPed = PlayerPedId()
-        
-        if IsPedInAnyVehicle(playerPed, false) then
-            local vehicle = GetVehiclePedIsIn(playerPed, false)
-            
-            if GetPedInVehicleSeat(vehicle, -1) == playerPed then
-                lift.inUse = true
-                currentLift = liftIndex
-                currentVehicle = vehicle
-                
-                -- Move vehicle to lift
-                SetEntityCoords(vehicle, lift.coords.x, lift.coords.y, lift.coords.z)
-                SetEntityHeading(vehicle, lift.heading)
-                
-                -- Raise vehicle (simple animation)
-                local vehicleCoords = GetEntityCoords(vehicle)
-                SetEntityCoords(vehicle, vehicleCoords.x, vehicleCoords.y, vehicleCoords.z + 1.0)
-                
-                ESX.ShowNotification("Vehicle lifted successfully!")
-                OpenRepairMenu()
-            else
-                ESX.ShowNotification("You must be the driver to use the lift!")
-            end
-        else
-            ESX.ShowNotification("You must be in a vehicle to use the lift!")
-        end
-    else
-        ESX.ShowNotification("You need to be a mechanic to use this!")
-    end
+local function gatherVehicleData(vehicle)
+    if vehicle == 0 then return nil end
+    local class = GetVehicleClass(vehicle)
+    local health = Utils.getVehicleHealthPercent(vehicle)
+    local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
+    local modelHash = GetEntityModel(vehicle)
+    local displayName = GetDisplayNameFromVehicleModel(modelHash)
+    return {
+        plate = plate,
+        class = class,
+        model = displayName,
+        health = health
+    }
 end
 
--- Open Mechanic Menu
-function OpenMechanicMenu()
-    if not Config.RequireJob or PlayerData.job.name == Config.MechanicJob then
-        local elements = {
-            {label = 'Vehicle Diagnostics', value = 'diagnostics'},
-            {label = 'Quick Repair', value = 'quick_repair'},
-            {label = 'Parts Management', value = 'parts'},
-            {label = 'Vehicle Modifications', value = 'mods'}
-        }
-        
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'mechanic_menu', {
-            title = 'Mechanic Menu',
-            align = 'top-left',
-            elements = elements
-        }, function(data, menu)
-            if data.current.value == 'diagnostics' then
-                OpenDiagnosticsMenu()
-            elseif data.current.value == 'quick_repair' then
-                OpenQuickRepairMenu()
-            elseif data.current.value == 'parts' then
-                OpenPartsMenu()
-            elseif data.current.value == 'mods' then
-                OpenModificationsMenu()
-            end
-        end, function(data, menu)
-            menu.close()
-        end)
-    else
-        ESX.ShowNotification("You need to be a mechanic to access this menu!")
-    end
+local function sendUI(action, data)
+    SendNUIMessage({ action = action, data = data })
 end
 
--- Open Diagnostics Menu
-function OpenDiagnosticsMenu()
-    local playerPed = PlayerPedId()
-    
-    if IsPedInAnyVehicle(playerPed, false) then
-        local vehicle = GetVehiclePedIsIn(playerPed, false)
-        local engineHealth = GetVehicleEngineHealth(vehicle)
-        local bodyHealth = GetVehicleBodyHealth(vehicle)
-        local fuelLevel = GetVehicleFuelLevel(vehicle)
-        
-        local elements = {
-            {label = 'Engine Health: ' .. math.floor(engineHealth) .. '%', value = 'engine'},
-            {label = 'Body Health: ' .. math.floor(bodyHealth) .. '%', value = 'body'},
-            {label = 'Fuel Level: ' .. math.floor(fuelLevel) .. '%', value = 'fuel'}
-        }
-        
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'diagnostics_menu', {
-            title = 'Vehicle Diagnostics',
-            align = 'top-left',
-            elements = elements
-        }, function(data, menu)
-            if data.current.value == 'engine' then
-                ESX.ShowNotification("Engine requires attention: " .. math.floor(engineHealth) .. "% health")
-            elseif data.current.value == 'body' then
-                ESX.ShowNotification("Body condition: " .. math.floor(bodyHealth) .. "% health")
-            elseif data.current.value == 'fuel' then
-                ESX.ShowNotification("Fuel level: " .. math.floor(fuelLevel) .. "%")
-            end
-        end, function(data, menu)
-            menu.close()
-        end)
-    else
-        ESX.ShowNotification("You must be in a vehicle to run diagnostics!")
-    end
-end
-
--- Open Quick Repair Menu
-function OpenQuickRepairMenu()
-    local playerPed = PlayerPedId()
-    
-    if IsPedInAnyVehicle(playerPed, false) then
-        local vehicle = GetVehiclePedIsIn(playerPed, false)
-        local elements = {
-            {label = 'Repair Engine ($' .. Config.RepairSettings.engineRepair.cost .. ')', value = 'engine_repair'},
-            {label = 'Repair Body ($' .. Config.RepairSettings.bodyRepair.cost .. ')', value = 'body_repair'},
-            {label = 'Repair Wheels ($' .. Config.RepairSettings.wheelRepair.cost .. ')', value = 'wheel_repair'},
-            {label = 'Full Repair ($' .. Config.RepairSettings.fullRepair.cost .. ')', value = 'full_repair'}
-        }
-        
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'quick_repair_menu', {
-            title = 'Quick Repair Options',
-            align = 'top-left',
-            elements = elements
-        }, function(data, menu)
-            if data.current.value == 'engine_repair' then
-                TriggerRepair('engine', vehicle)
-            elseif data.current.value == 'body_repair' then
-                TriggerRepair('body', vehicle)
-            elseif data.current.value == 'wheel_repair' then
-                TriggerRepair('wheel', vehicle)
-            elseif data.current.value == 'full_repair' then
-                TriggerRepair('full', vehicle)
-            end
-            menu.close()
-        end, function(data, menu)
-            menu.close()
-        end)
-    else
-        ESX.ShowNotification("You must be in a vehicle to repair!")
-    end
-end
-
--- Trigger Repair
-function TriggerRepair(repairType, vehicle)
-    if isRepairing then
-        ESX.ShowNotification("Already repairing a vehicle!")
+local function openUI()
+    if uiOpen then return end
+    if not isMechanic() then
+        notify(Config.Text.not_mechanic)
         return
     end
-    
-    local repairConfig = Config.RepairSettings[repairType .. 'Repair']
-    if not repairConfig then
-        repairConfig = Config.RepairSettings.fullRepair
-    end
-    
-    -- Check if player has required parts
-    ESX.TriggerServerCallback('mechanic:checkParts', function(hasParts)
-        if hasParts then
-            isRepairing = true
-            ESX.ShowNotification("Starting repair... Please wait.")
-            
-            -- Start repair animation
-            local playerPed = PlayerPedId()
-            TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_BUM_BIN", 0, true)
-            
-            -- Repair progress bar
-            exports['progressBars']:startUI(repairConfig.time, "Repairing vehicle...")
-            
-            Citizen.Wait(repairConfig.time)
-            
-            -- Complete repair
-            ClearPedTasks(playerPed)
-            isRepairing = false
-            
-            if repairType == 'engine' then
-                SetVehicleEngineHealth(vehicle, 1000.0)
-            elseif repairType == 'body' then
-                SetVehicleBodyHealth(vehicle, 1000.0)
-            elseif repairType == 'wheel' then
-                SetVehicleWheelHealth(vehicle, 1000.0)
-            elseif repairType == 'full' then
-                SetVehicleEngineHealth(vehicle, 1000.0)
-                SetVehicleBodyHealth(vehicle, 1000.0)
-                SetVehicleWheelHealth(vehicle, 1000.0)
-                SetVehicleFuelLevel(vehicle, 100.0)
-            end
-            
-            ESX.ShowNotification("Repair completed successfully!")
-            
-            -- Remove parts from inventory
-            TriggerServerEvent('mechanic:removeParts', repairConfig.requiredParts)
-            
-        else
-            ESX.ShowNotification("You don't have the required parts for this repair!")
+    uiOpen = true
+    SetNuiFocus(true, true)
+
+    local ped = PlayerPedId()
+    local veh = GetVehiclePedIsIn(ped, false)
+    if veh == 0 then veh = getClosestVehicle(GetEntityCoords(ped), 6.0) end
+    lastVehicle = veh
+
+    local vehData = gatherVehicleData(veh)
+    sendUI('show', { vehicle = vehData, parts = nil })
+    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
+        sendUI('updatePartsInventory', parts or {})
+    end)
+end
+
+local function closeUI()
+    if not uiOpen then return end
+    uiOpen = false
+    SetNuiFocus(false, false)
+    sendUI('hide', {})
+end
+
+local function playProgress(label, durationMs)
+    if Config.UseProgressBarsExport and exports and exports['progressBars'] then
+        -- try commonly used exports
+        if exports['progressBars'].startUI then
+            exports['progressBars']:startUI(durationMs, label)
+            Wait(durationMs)
+            return
+        elseif exports['progressBars'].custom then
+            exports['progressBars']:custom({
+                Duration = durationMs,
+                Label = label,
+                Animation = {scenario = 'WORLD_HUMAN_VEHICLE_MECHANIC'},
+                DisableControls = true,
+                CanCancel = false,
+            })
+            Wait(durationMs)
+            return
         end
-    end, repairConfig.requiredParts)
+    end
+    sendUI('showProgress', { label = label, duration = durationMs })
+    Wait(durationMs)
+    sendUI('hideProgress')
 end
 
--- Open Parts Menu
-function OpenPartsMenu()
-    local elements = {}
-    
-    for partId, partData in pairs(Config.Parts) do
-        table.insert(elements, {
-            label = partData.label .. ' - $' .. partData.price,
-            value = partId,
-            price = partData.price
-        })
+local function performRepair(repairKey)
+    if lastVehicle == 0 or not DoesEntityExist(lastVehicle) then
+        notify(Config.Text.no_vehicle)
+        return
     end
-    
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'parts_menu', {
-        title = 'Parts Shop',
-        align = 'top-left',
-        elements = elements
-    }, function(data, menu)
-        ESX.UI.Menu.Open('dialog', GetCurrentResourceName(), 'parts_quantity', {
-            title = 'Quantity'
-        }, function(data2, menu2)
-            local quantity = tonumber(data2.value)
-            if quantity and quantity > 0 then
-                TriggerServerEvent('mechanic:buyPart', data.current.value, quantity)
-                menu2.close()
+
+    ESX.TriggerServerCallback('mechanic:hasRequiredParts', function(hasParts, missing)
+        if not hasParts then
+            if missing and #missing > 0 then
+                notify('Missing parts: ' .. table.concat(missing, ', '))
             else
-                ESX.ShowNotification("Invalid quantity!")
+                notify('You do not have the required parts.')
             end
-        end, function(data2, menu2)
-            menu2.close()
-        end)
-    end, function(data, menu)
-        menu.close()
-    end)
-end
-
--- Open Parts Storage
-function OpenPartsStorage()
-    if not Config.RequireJob or PlayerData.job.name == Config.MechanicJob then
-        ESX.TriggerServerCallback('mechanic:getInventoryParts', function(parts)
-            local elements = {}
-            
-            for partId, count in pairs(parts) do
-                if Config.Parts[partId] then
-                    table.insert(elements, {
-                        label = Config.Parts[partId].label .. ' x' .. count,
-                        value = partId,
-                        count = count
-                    })
-                end
-            end
-            
-            ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'parts_storage', {
-                title = 'Parts Storage',
-                align = 'top-left',
-                elements = elements
-            }, function(data, menu)
-                -- Parts storage management options
-                ESX.ShowNotification("Parts storage accessed")
-            end, function(data, menu)
-                menu.close()
-            end)
-        end)
-    else
-        ESX.ShowNotification("You need to be a mechanic to access parts storage!")
-    end
-end
-
--- Open Modifications Menu
-function OpenModificationsMenu()
-    local playerPed = PlayerPedId()
-    
-    if IsPedInAnyVehicle(playerPed, false) then
-        local vehicle = GetVehiclePedIsIn(playerPed, false)
-        local elements = {
-            {label = 'Performance Mods', value = 'performance'},
-            {label = 'Visual Mods', value = 'visual'},
-            {label = 'Paint Job', value = 'paint'}
-        }
-        
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'mods_menu', {
-            title = 'Vehicle Modifications',
-            align = 'top-left',
-            elements = elements
-        }, function(data, menu)
-            if data.current.value == 'performance' then
-                OpenPerformanceMenu(vehicle)
-            elseif data.current.value == 'visual' then
-                OpenVisualMenu(vehicle)
-            elseif data.current.value == 'paint' then
-                OpenPaintMenu(vehicle)
-            end
-        end, function(data, menu)
-            menu.close()
-        end)
-    else
-        ESX.ShowNotification("You must be in a vehicle to modify!")
-    end
-end
-
--- Open Performance Menu
-function OpenPerformanceMenu(vehicle)
-    local elements = {
-        {label = 'Engine Upgrade', value = 'engine_upgrade'},
-        {label = 'Brake Upgrade', value = 'brake_upgrade'},
-        {label = 'Transmission Upgrade', value = 'transmission_upgrade'},
-        {label = 'Turbo', value = 'turbo'}
-    }
-    
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'performance_menu', {
-        title = 'Performance Modifications',
-        align = 'top-left',
-        elements = elements
-    }, function(data, menu)
-        ESX.ShowNotification("Performance modification: " .. data.current.label)
-        -- Add actual modification logic here
-    end, function(data, menu)
-        menu.close()
-    end)
-end
-
--- Open Visual Menu
-function OpenVisualMenu(vehicle)
-    local elements = {
-        {label = 'Body Kits', value = 'body_kits'},
-        {label = 'Wheels', value = 'wheels'},
-        {label = 'Exhaust', value = 'exhaust'},
-        {label = 'Spoiler', value = 'spoiler'}
-    }
-    
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'visual_menu', {
-        title = 'Visual Modifications',
-        align = 'top-left',
-        elements = elements
-    }, function(data, menu)
-        ESX.ShowNotification("Visual modification: " .. data.current.label)
-        -- Add actual modification logic here
-    end, function(data, menu)
-        menu.close()
-    end)
-end
-
--- Open Paint Menu
-function OpenPaintMenu(vehicle)
-    local elements = {
-        {label = 'Red', value = 'red'},
-        {label = 'Blue', value = 'blue'},
-        {label = 'Green', value = 'green'},
-        {label = 'Yellow', value = 'yellow'},
-        {label = 'Black', value = 'black'},
-        {label = 'White', value = 'white'}
-    }
-    
-    ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'paint_menu', {
-        title = 'Paint Colors',
-        align = 'top-left',
-        elements = elements
-    }, function(data, menu)
-        local colors = {
-            red = {r = 255, g = 0, b = 0},
-            blue = {r = 0, g = 0, b = 255},
-            green = {r = 0, g = 255, b = 0},
-            yellow = {r = 255, g = 255, b = 0},
-            black = {r = 0, g = 0, b = 0},
-            white = {r = 255, g = 255, b = 255}
-        }
-        
-        if colors[data.current.value] then
-            SetVehicleCustomPrimaryColour(vehicle, colors[data.current.value].r, colors[data.current.value].g, colors[data.current.value].b)
-            ESX.ShowNotification("Vehicle painted " .. data.current.label)
+            return
         end
-    end, function(data, menu)
-        menu.close()
+
+        local repairData = Utils.getRepairData(repairKey)
+        if not repairData then return end
+
+        TaskStartScenarioInPlace(PlayerPedId(), 'WORLD_HUMAN_VEHICLE_MECHANIC', 0, true)
+        playProgress(Config.Text.repairing, repairData.time)
+        ClearPedTasks(PlayerPedId())
+
+        -- consume parts
+        TriggerServerEvent('mechanic:consumeParts', repairData.parts)
+
+        -- apply repair effect
+        SetVehicleFixed(lastVehicle)
+        SetVehicleDeformationFixed(lastVehicle)
+        SetVehicleEngineHealth(lastVehicle, 1000.0)
+        SetVehicleBodyHealth(lastVehicle, 1000.0)
+
+        local vehData = gatherVehicleData(lastVehicle)
+        sendUI('updateVehicleData', vehData)
+        notify('Repair completed!')
+    end, repairKey)
+end
+
+-- NUI Callbacks
+RegisterNUICallback('close', function(_, cb)
+    closeUI()
+    cb('ok')
+end)
+
+RegisterNUICallback('buyPart', function(data, cb)
+    local part = data and data.part
+    local qty = tonumber(data and data.quantity) or 1
+    if not part or not Utils.isValidPart(part) then cb('invalid'); return end
+    TriggerServerEvent('mechanic:buyPart', part, qty)
+    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
+        sendUI('updatePartsInventory', parts or {})
     end)
-end
+    cb('ok')
+end)
 
--- Open Repair Menu (when on lift)
-function OpenRepairMenu()
-    if currentVehicle and currentLift then
-        local elements = {
-            {label = 'Repair Engine', value = 'engine_repair'},
-            {label = 'Repair Body', value = 'body_repair'},
-            {label = 'Repair Wheels', value = 'wheel_repair'},
-            {label = 'Full Repair', value = 'full_repair'},
-            {label = 'Lower Vehicle', value = 'lower_vehicle'}
-        }
-        
-        ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'repair_menu', {
-            title = 'Vehicle Repair (On Lift)',
-            align = 'top-left',
-            elements = elements
-        }, function(data, menu)
-            if data.current.value == 'lower_vehicle' then
-                LowerVehicle()
-            else
-                TriggerRepair(data.current.value:gsub('_repair', ''), currentVehicle)
-            end
-        end, function(data, menu)
-            menu.close()
-        end)
-    end
-end
+RegisterNUICallback('performRepair', function(data, cb)
+    local repairKey = data and data.repair
+    if not repairKey then cb('invalid'); return end
+    performRepair(repairKey)
+    cb('ok')
+end)
 
--- Lower Vehicle
-function LowerVehicle()
-    if currentVehicle and currentLift then
-        local lift = Config.Locations.lifts[currentLift]
-        local vehicleCoords = GetEntityCoords(currentVehicle)
-        
-        -- Lower vehicle
-        SetEntityCoords(currentVehicle, vehicleCoords.x, vehicleCoords.y, vehicleCoords.z - 1.0)
-        
-        -- Mark lift as available
-        lift.inUse = false
-        currentLift = nil
-        currentVehicle = nil
-        
-        ESX.ShowNotification("Vehicle lowered successfully!")
-    end
-end
+RegisterNUICallback('requestPartsInventory', function(_, cb)
+    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
+        sendUI('updatePartsInventory', parts or {})
+        cb(parts or {})
+    end)
+end)
 
 -- Commands
 RegisterCommand('mechanic', function()
-    if not Config.RequireJob or PlayerData.job.name == Config.MechanicJob then
-        OpenMechanicMenu()
-    else
-        ESX.ShowNotification("You need to be a mechanic to use this command!")
-    end
-end, false)
-
-RegisterCommand('repair', function()
-    local playerPed = PlayerPedId()
-    
-    if IsPedInAnyVehicle(playerPed, false) then
-        local vehicle = GetVehiclePedIsIn(playerPed, false)
-        TriggerRepair('full', vehicle)
-    else
-        ESX.ShowNotification("You must be in a vehicle to repair!")
-    end
-end, false)
-
--- Events
-RegisterNetEvent('mechanic:repairComplete')
-AddEventHandler('mechanic:repairComplete', function()
-    isRepairing = false
-    ESX.ShowNotification("Repair completed!")
+    openUI()
 end)
 
--- Cleanup on resource stop
-AddEventHandler('onResourceStop', function(resourceName)
-    if GetCurrentResourceName() == resourceName then
-        if currentVehicle and currentLift then
-            LowerVehicle()
+-- Markers & interactions
+CreateThread(function()
+    createBlip(Config.MainShop)
+
+    while true do
+        local sleep = 1000
+        local ped = PlayerPedId()
+        local coords = GetEntityCoords(ped)
+
+        -- Main shop
+        local distShop = #(coords - Config.MainShop.coords)
+        if distShop < 25.0 then
+            sleep = 0
+            drawMarkerAt(Config.MainShop.marker, Config.MainShop.coords)
+            if distShop < 2.0 then
+                ESX.ShowHelpNotification(Config.Text.press_e_open)
+                if IsControlJustReleased(0, 38) then -- E
+                    openUI()
+                end
+            end
         end
+
+        -- Parts storage
+        local distStore = #(coords - Config.PartsStorage.coords)
+        if distStore < 15.0 then
+            sleep = 0
+            drawMarkerAt(Config.PartsStorage.marker, Config.PartsStorage.coords)
+            if distStore < 2.0 then
+                ESX.ShowHelpNotification(Config.Text.press_e_storage)
+                if IsControlJustReleased(0, 38) then
+                    openUI()
+                end
+            end
+        end
+
+        -- Lifts
+        for i, lift in ipairs(Config.Lifts) do
+            local distLift = #(coords - lift.coords)
+            if distLift < 15.0 then
+                sleep = 0
+                drawMarkerAt(lift.marker, lift.coords)
+                if distLift < 2.0 then
+                    ESX.ShowHelpNotification(Config.Text.press_e_lift)
+                    if IsControlJustReleased(0, 38) then
+                        currentLift = i
+                        local veh = getClosestVehicle(lift.coords, 3.0)
+                        if veh ~= 0 then
+                            local pos = GetEntityCoords(veh)
+                            SetEntityCoords(veh, pos.x, pos.y, pos.z + lift.liftHeight, false, false, false, true)
+                            FreezeEntityPosition(veh, true)
+                            notify('Vehicle raised on ' .. (lift.name or 'Lift'))
+                        else
+                            notify(Config.Text.no_vehicle)
+                        end
+                    end
+                end
+            end
+        end
+
+        Wait(sleep)
+    end
+end)
+
+-- Keybind to lower vehicle if frozen on a lift
+RegisterKeyMapping('lowerlift', 'Lower vehicle on lift', 'keyboard', 'L')
+RegisterCommand('lowerlift', function()
+    if not currentLift then return end
+    local lift = Config.Lifts[currentLift]
+    local veh = getClosestVehicle(lift.coords, 3.0)
+    if veh ~= 0 then
+        FreezeEntityPosition(veh, false)
+        local pos = GetEntityCoords(veh)
+        SetEntityCoords(veh, pos.x, pos.y, pos.z - (lift.liftHeight or 1.5), false, false, false, true)
+        notify('Vehicle lowered from ' .. (lift.name or 'Lift'))
+    end
+end)
+
+-- Open UI with E near shop even without command
+CreateThread(function()
+    while true do
+        if uiOpen then
+            DisableControlAction(0, 1, true)
+            DisableControlAction(0, 2, true)
+            DisableControlAction(0, 200, true)
+            DisableControlAction(0, 322, true)
+        end
+        Wait(0)
     end
 end)

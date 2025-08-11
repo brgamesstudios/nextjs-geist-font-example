@@ -1,187 +1,130 @@
 -- Shared utility functions for the mechanic script
 
--- Check if a vehicle is repairable
-function IsVehicleRepairable(vehicle)
-    if not vehicle or not DoesEntityExist(vehicle) then
-        return false
-    end
-    
-    local vehicleClass = GetVehicleClass(vehicle)
-    return Config.RepairableVehicles[vehicleClass] or false
-end
+local Utils = {}
 
--- Get vehicle health percentage
-function GetVehicleHealthPercentage(vehicle)
-    if not vehicle or not DoesEntityExist(vehicle) then
-        return 0
-    end
-    
-    local engineHealth = GetVehicleEngineHealth(vehicle)
-    local bodyHealth = GetVehicleBodyHealth(vehicle)
-    
-    return math.floor((engineHealth + bodyHealth) / 20) -- Convert to percentage (2000 max health / 100%)
-end
-
--- Check if player is near a specific location
-function IsPlayerNearLocation(playerCoords, targetCoords, maxDistance)
-    maxDistance = maxDistance or 2.0
-    return #(playerCoords - targetCoords) <= maxDistance
-end
-
--- Format currency
-function FormatCurrency(amount)
-    return "$" .. tostring(amount)
-end
-
--- Validate part ID
-function IsValidPart(partId)
-    return Config.Parts[partId] ~= nil
-end
-
--- Get part data
-function GetPartData(partId)
-    return Config.Parts[partId]
-end
-
--- Check if player has mechanic job
-function HasMechanicJob(playerData)
-    if not Config.RequireJob then
-        return true
-    end
-    
-    return playerData.job and playerData.job.name == Config.MechanicJob
-end
-
--- Get repair cost for a specific repair type
-function GetRepairCost(repairType)
-    local repairConfig = Config.RepairSettings[repairType .. 'Repair']
-    return repairConfig and repairConfig.cost or 0
-end
-
--- Get repair time for a specific repair type
-function GetRepairTime(repairType)
-    local repairConfig = Config.RepairSettings[repairType .. 'Repair']
-    return repairConfig and repairConfig.time or 0
-end
-
--- Check if all required parts are available
-function HasRequiredParts(parts, requiredParts)
-    for _, requiredPart in ipairs(requiredParts) do
-        if not parts[requiredPart] or parts[requiredPart] < 1 then
-            return false
-        end
-    end
-    return true
-end
-
--- Format time in seconds to readable format
-function FormatTime(seconds)
-    if seconds < 60 then
-        return seconds .. " seconds"
-    elseif seconds < 3600 then
-        local minutes = math.floor(seconds / 60)
-        local remainingSeconds = seconds % 60
-        return minutes .. "m " .. remainingSeconds .. "s"
-    else
-        local hours = math.floor(seconds / 3600)
-        local remainingMinutes = math.floor((seconds % 3600) / 60)
-        return hours .. "h " .. remainingMinutes .. "m"
+local function safePrint(...)
+    if Config and Config.Debug then
+        print('[mechanic] ', ...)
     end
 end
 
--- Validate coordinates
-function IsValidCoords(coords)
-    return coords and type(coords) == "vector3" and 
-           coords.x and coords.y and coords.z and
-           coords.x ~= 0 and coords.y ~= 0 and coords.z ~= 0
+function Utils.clamp(value, min, max)
+    if value < min then return min end
+    if value > max then return max end
+    return value
 end
 
--- Get distance between two coordinates
-function GetDistance(coords1, coords2)
-    if not IsValidCoords(coords1) or not IsValidCoords(coords2) then
-        return math.huge
-    end
-    return #(coords1 - coords2)
+function Utils.round(number, decimals)
+    local power = 10 ^ (decimals or 0)
+    return math.floor(number * power + 0.5) / power
 end
 
--- Check if a value is within a range
-function IsInRange(value, min, max)
-    return value >= min and value <= max
+function Utils.getDistance(a, b)
+    return #(a - b)
 end
 
--- Clamp a value between min and max
-function Clamp(value, min, max)
-    return math.max(min, math.min(max, value))
+function Utils.isInRange(point, center, range)
+    return Utils.getDistance(point, center) <= range
 end
 
--- Round a number to specified decimal places
-function Round(number, decimals)
-    decimals = decimals or 0
-    local multiplier = 10^decimals
-    return math.floor(number * multiplier + 0.5) / multiplier
-end
-
--- Check if a table contains a value
-function TableContains(table, value)
-    for _, v in pairs(table) do
-        if v == value then
-            return true
-        end
+function Utils.tableContains(t, value)
+    for _, v in pairs(t) do
+        if v == value then return true end
     end
     return false
 end
 
--- Deep copy a table
-function DeepCopy(orig)
+function Utils.deepCopy(orig)
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
         copy = {}
         for orig_key, orig_value in next, orig, nil do
-            copy[DeepCopy(orig_key)] = DeepCopy(orig_value)
+            copy[Utils.deepCopy(orig_key)] = Utils.deepCopy(orig_value)
         end
-        setmetatable(copy, DeepCopy(getmetatable(orig)))
+        setmetatable(copy, Utils.deepCopy(getmetatable(orig)))
     else
         copy = orig
     end
     return copy
 end
 
--- Merge two tables
-function MergeTables(t1, t2)
-    local result = DeepCopy(t1)
-    for k, v in pairs(t2) do
-        result[k] = v
+function Utils.mergeTables(base, override)
+    local result = Utils.deepCopy(base)
+    for k, v in pairs(override) do
+        if type(v) == 'table' and type(result[k]) == 'table' then
+            result[k] = Utils.mergeTables(result[k], v)
+        else
+            result[k] = v
+        end
     end
     return result
 end
 
--- Log function for debugging
-function Log(message, level)
-    if Config.Debug then
-        level = level or "INFO"
-        print(string.format("[MECHANIC] [%s] %s", level, message))
-    end
+function Utils.formatCurrency(amount)
+    local left, num, right = string.match(tostring(amount), '^([^%d]*%d)(%d*)(.-)$')
+    return left .. (num:reverse():gsub('(%d%d%d)', '%1,'):reverse()) .. right
 end
 
--- Export utility functions
-exports('IsVehicleRepairable', IsVehicleRepairable)
-exports('GetVehicleHealthPercentage', GetVehicleHealthPercentage)
-exports('IsPlayerNearLocation', IsPlayerNearLocation)
-exports('FormatCurrency', FormatCurrency)
-exports('IsValidPart', IsValidPart)
-exports('GetPartData', GetPartData)
-exports('HasMechanicJob', HasMechanicJob)
-exports('GetRepairCost', GetRepairCost)
-exports('GetRepairTime', GetRepairTime)
-exports('HasRequiredParts', HasRequiredParts)
-exports('FormatTime', FormatTime)
-exports('IsValidCoords', IsValidCoords)
-exports('GetDistance', GetDistance)
-exports('IsInRange', IsInRange)
-exports('Clamp', Clamp)
-exports('Round', Round)
-exports('TableContains', TableContains)
-exports('DeepCopy', DeepCopy)
-exports('MergeTables', MergeTables)
-exports('Log', Log)
+function Utils.getVehicleHealthPercent(vehicle)
+    if not DoesEntityExist(vehicle) then return 0 end
+    local body = GetVehicleBodyHealth(vehicle) -- 0.0 - 1000.0
+    local engine = GetVehicleEngineHealth(vehicle)
+    local fuel = GetVehiclePetrolTankHealth(vehicle)
+    local avg = (body + engine + fuel) / 3.0
+    return Utils.clamp(Utils.round((avg / 1000.0) * 100.0, 1), 0.0, 100.0)
+end
+
+function Utils.isVehicleRepairableClass(class)
+    return Config.RepairableVehicleClasses[class] == true
+end
+
+function Utils.isValidPart(partName)
+    return Config.Parts[partName] ~= nil
+end
+
+function Utils.getPartData(partName)
+    return Config.Parts[partName]
+end
+
+function Utils.getRepairData(repairKey)
+    return Config.Repairs[repairKey]
+end
+
+function Utils.getRepairCost(repairKey)
+    local data = Utils.getRepairData(repairKey)
+    return data and data.baseCost or 0
+end
+
+function Utils.getRepairTime(repairKey)
+    local data = Utils.getRepairData(repairKey)
+    return data and data.time or 0
+end
+
+function Utils.hasMechanicJob(jobName, grade)
+    if not jobName then return false end
+    if jobName ~= Config.MechanicJobName then return false end
+    if grade and grade < (Config.RequiredJobGrade or 0) then return false end
+    return true
+end
+
+function Utils.log(...)
+    safePrint(...)
+end
+
+-- Exports
+exports('Clamp', Utils.clamp)
+exports('Round', Utils.round)
+exports('GetDistance', Utils.getDistance)
+exports('IsInRange', Utils.isInRange)
+exports('FormatCurrency', Utils.formatCurrency)
+exports('GetVehicleHealthPercentage', Utils.getVehicleHealthPercent)
+exports('IsVehicleRepairableClass', Utils.isVehicleRepairableClass)
+exports('IsValidPart', Utils.isValidPart)
+exports('GetPartData', Utils.getPartData)
+exports('GetRepairData', Utils.getRepairData)
+exports('GetRepairCost', Utils.getRepairCost)
+exports('GetRepairTime', Utils.getRepairTime)
+exports('HasMechanicJob', Utils.hasMechanicJob)
+
+return Utils
