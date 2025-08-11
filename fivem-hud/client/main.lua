@@ -203,8 +203,9 @@ CreateThread(function()
           engineHealth = math.floor(engineHealth / 10)
         end
         if Prefs.ShowIndicators then
-          indicatorLeft = IsVehicleIndicatorLightOn(veh, 1)
-          indicatorRight = IsVehicleIndicatorLightOn(veh, 0)
+          local ind = GetVehicleIndicatorLights(veh) or 0
+          indicatorLeft = (ind & 1) ~= 0
+          indicatorRight = (ind & 2) ~= 0
         end
       end
 
