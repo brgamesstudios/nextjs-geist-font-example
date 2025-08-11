@@ -189,79 +189,126 @@ local function getVehicleFuelLevel(veh)
   return 0
 end
 
--- Main HUD tick
+-- Track vehicle state
+local isInVehicle = false
+local lastVehicleState = false
+
+-- Main HUD update thread
 CreateThread(function()
   while true do
-    if isHudVisible then
-      local ped = PlayerPedId()
-      local hp = math.floor((GetEntityHealth(ped) - 100) / (GetEntityMaxHealth(ped) - 100) * 100)
-      if hp < 0 then hp = 0 end
-      local armor = GetPedArmour(ped)
-      if armor > 100 then armor = 100 end
-
-      local inVehicle = IsPedInAnyVehicle(ped, false)
-      local speed = 0
-      local gear = 0
-      local rpm = 0
-      local fuel = 0
-      local engineHealth = 0
-      local indicatorLeft = false
-      local indicatorRight = false
-
-      if inVehicle then
-        local veh = GetVehiclePedIsIn(ped, false)
-        local speedMs = GetEntitySpeed(veh)
-        if Prefs.MetricSpeed then
-          speed = math.floor(speedMs * 3.6 + 0.5)
-        else
-          speed = math.floor(speedMs * 2.236936 + 0.5)
-        end
-        gear = GetVehicleCurrentGear(veh) or 0
-        rpm = GetVehicleCurrentRpm(veh) or 0
-
-        if Prefs.ShowFuel then
-          fuel = math.floor(getVehicleFuelLevel(veh) + 0.5)
-          if fuel < 0 then fuel = 0 elseif fuel > 100 then fuel = 100 end
-        end
-        if Prefs.ShowEngine then
-          engineHealth = math.floor((GetVehicleEngineHealth(veh) or 0) / 10)
-          engineHealth = math.max(0, math.min(1000, engineHealth))
-          engineHealth = math.floor(engineHealth / 10)
-        end
-        if Prefs.ShowIndicators then
-          local ind = GetVehicleIndicatorLights(veh) or 0
-          indicatorLeft = (ind & 1) ~= 0
-          indicatorRight = (ind & 2) ~= 0
-        end
-      end
-
-      local heading = GetEntityHeading(ped)
-      local hour = 0
-      local minute = 0
-      if Prefs.ShowClock then
-        hour, minute = GetClockHours(), GetClockMinutes()
-      end
-
+    local ped = PlayerPedId()
+    local currentVehicleState = IsPedInAnyVehicle(ped, false)
+    
+    -- Check if vehicle state changed
+    if currentVehicleState ~= lastVehicleState then
+      isInVehicle = currentVehicleState
+      lastVehicleState = currentVehicleState
+      
+      -- Send vehicle state change to NUI
       SendNUIMessage({
-        action = 'tick',
-        hp = hp,
-        armor = armor,
-        stress = (Prefs.UseStress and qbStress or 0),
-        inVehicle = inVehicle,
-        speed = speed,
-        gear = gear,
-        rpm = rpm,
-        heading = heading,
-        seatbelt = seatbeltOn,
-        fuel = fuel,
-        engine = engineHealth,
-        bl = indicatorLeft,
-        br = indicatorRight,
-        hour = hour,
-        minute = minute
+        action = 'vehicleStateChanged',
+        inVehicle = isInVehicle
       })
     end
-    Wait(Config.TickMs or 100)
+    
+    if isInVehicle then
+      local veh = GetVehiclePedIsIn(ped, false)
+      if veh and veh ~= 0 then
+        -- Vehicle data collection
+        local speed = GetEntitySpeed(veh)
+        local gear = GetVehicleCurrentGear(veh)
+        local rpm = GetVehicleCurrentRpm(veh)
+        local fuel = getVehicleFuelLevel(veh)
+        local engine = getVehicleEngineHealth(veh)
+        
+        -- Convert speed to mph/kmh
+        if Config.MetricSpeed then
+          speed = speed * 3.6 -- m/s to km/h
+        else
+          speed = speed * 2.236936 -- m/s to mph
+        end
+        
+        -- Get indicator states
+        local ind = GetVehicleIndicatorLights(veh) or 0
+        local indicatorLeft = (ind & 1) ~= 0
+        local indicatorRight = (ind & 2) ~= 0
+        
+        -- Get seatbelt state
+        local seatbelt = false
+        if Config.UseSeatbelt then
+          if Config.SeatbeltFromQB and QBCore then
+            seatbelt = LocalPlayer.state[Config.SeatbeltStateKey] or false
+          else
+            seatbelt = seatbeltOn
+          end
+        end
+        
+        -- Send vehicle data to NUI
+        SendNUIMessage({
+          action = 'tick',
+          speed = math.floor(speed),
+          gear = gear,
+          rpm = rpm,
+          fuel = fuel,
+          engine = engine,
+          bl = indicatorLeft,
+          br = indicatorRight,
+          seatbelt = seatbelt
+        })
+      end
+    else
+      -- Player is not in vehicle, send empty vehicle data
+      SendNUIMessage({
+        action = 'tick',
+        speed = 0,
+        gear = 0,
+        rpm = 0,
+        fuel = 0,
+        engine = 0,
+        bl = false,
+        br = false,
+        seatbelt = false
+      })
+    end
+    
+    Wait(Config.TickMs)
+  end
+end)
+
+-- Player stats update thread (independent of vehicle)
+CreateThread(function()
+  while true do
+    local ped = PlayerPedId()
+    
+    -- Player stats
+    local hp = math.floor((GetEntityHealth(ped) - 100) / (GetEntityMaxHealth(ped) - 100) * 100)
+    if hp < 0 then hp = 0 end
+    local armor = GetPedArmour(ped)
+    if armor > 100 then armor = 100 end
+    
+    -- Get stress from QBCore if available
+    local stress = 0
+    if Config.UseStress and QBCore then
+      stress = qbStress or 0
+    end
+    
+    -- Get heading and time
+    local heading = GetEntityHeading(ped)
+    local hour = GetClockHours()
+    local minute = GetClockMinutes()
+    
+    -- Send player stats to NUI
+    SendNUIMessage({
+      action = 'playerStats',
+      hp = hp,
+      armor = armor,
+      stress = stress,
+      heading = heading,
+      hour = hour,
+      minute = minute
+    })
+    
+    Wait(Config.TickMs)
   end
 end)
 

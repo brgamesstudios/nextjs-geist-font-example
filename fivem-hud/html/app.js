@@ -129,6 +129,57 @@ window.addEventListener('message', (e) => {
     }
     return;
   }
+  if (data.action === 'vehicleStateChanged') {
+    // Show/hide vehicle-related UI elements
+    const speedo = document.getElementById('speedo');
+    if (speedo) {
+      speedo.style.display = data.inVehicle ? 'flex' : 'none';
+    }
+    
+    // Show/hide minimap when not in vehicle (if configured)
+    if (minimapOverlay && !Config.RadarOnFoot) {
+      minimapOverlay.style.display = data.inVehicle ? 'flex' : 'none';
+    }
+    return;
+  }
+  if (data.action === 'playerStats') {
+    // Update player stats (health, armor, stress, clock)
+    if (hpVal) hpVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;
+    if (armorVal) armorVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
+    
+    // Update ring visual states
+    if (ringHp) ringHp.style.setProperty('--hp', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
+    if (ringArmor) ringArmor.style.setProperty('--arm', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
+    
+    // Hunger and thirst placeholders (if not wired to QBCore)
+    const hun = Math.max(0, Math.min(100, Math.round(data.hunger ?? 100)));
+    const thr = Math.max(0, Math.min(100, Math.round(data.thirst ?? 100)));
+    if (hungerVal) hungerVal.textContent = `${hun}`;
+    if (thirstVal) thirstVal.textContent = `${thr}`;
+    if (ringHunger) ringHunger.style.setProperty('--hun', `${hun}%`);
+    if (ringThirst) ringThirst.style.setProperty('--thr', `${thr}%`);
+    
+    // Update compass and minimap north
+    const heading = data.heading || 0;
+    if (compass) compass.textContent = headingToCardinal(heading);
+    if (northIndicator) northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+    
+    // Update minimap overlay north indicator
+    if (minimapOverlay && currentPrefs.useMinimap) {
+      const minimapNorth = minimapOverlay.querySelector('.minimap-north');
+      if (minimapNorth) {
+        minimapNorth.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+      }
+    }
+    
+    // Update clock
+    if (clockEl && currentPrefs.showClock) {
+      const hh = String(data.hour ?? 0).padStart(2, '0');
+      const mm = String(data.minute ?? 0).padStart(2, '0');
+      clockEl.textContent = `${hh}:${mm}`;
+    }
+    return;
+  }
   if (data.action === 'voice') {
     voice.classList.toggle('talking', !!data.talking);
     voiceLevelText.textContent = ['W','N','S','X'][Math.min(3, Math.max(0, data.level || 0))] || 'N';
@@ -155,39 +206,6 @@ window.addEventListener('message', (e) => {
       const enginePercent = Math.max(0, Math.min(100, data.engine || 100));
       engineFill.style.height = `${enginePercent}%`;
       engineText.textContent = `${Math.round(enginePercent)}%`;
-    }
-
-    // Right rings
-    hpVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;
-    armorVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
-    ringHp.style.setProperty('--hp', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
-    ringArmor.style.setProperty('--arm', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
-    // hunger/thirst placeholders if not wired
-    const hun = Math.max(0, Math.min(100, Math.round(data.hunger ?? 100)));
-    const thr = Math.max(0, Math.min(100, Math.round(data.thirst ?? 100)));
-    hungerVal.textContent = `${hun}`;
-    thirstVal.textContent = `${thr}`;
-    ringHunger.style.setProperty('--hun', `${hun}%`);
-    ringThirst.style.setProperty('--thr', `${thr}%`);
-
-    // Compass + minimap north
-    const heading = data.heading || 0;
-    compass.textContent = headingToCardinal(heading);
-    if (northIndicator) northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
-    
-    // Update minimap overlay north indicator
-    if (minimapOverlay && currentPrefs.useMinimap) {
-      const minimapNorth = minimapOverlay.querySelector('.minimap-north');
-      if (minimapNorth) {
-        minimapNorth.style.transform = `translateX(-50%) rotate(${heading}deg)`;
-      }
-    }
-
-    // Clock
-    if (clockEl && currentPrefs.showClock) {
-      const hh = String(data.hour ?? 0).padStart(2, '0');
-      const mm = String(data.minute ?? 0).padStart(2, '0');
-      clockEl.textContent = `${hh}:${mm}`;
     }
     return;
   }
