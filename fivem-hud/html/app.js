@@ -41,13 +41,13 @@ const hungerVal = document.getElementById('hungerVal');
 const thirstVal = document.getElementById('thirstVal');
 
 // Enhanced element references
-const seatbeltStatus = document.getElementById('seatbeltStatus');
-const stressStatus = document.getElementById('stressStatus');
-const stressValue = document.getElementById('stressValue');
-const leftIndicator = document.getElementById('leftIndicator');
-const rightIndicator = document.getElementById('rightIndicator');
-const leftIndicatorLight = leftIndicator?.querySelector('.indicator-light');
-const rightIndicatorLight = rightIndicator?.querySelector('.indicator-light');
+const seatbeltStatus = document.getElementById('seatbeltStatusBelow');
+const stressStatus = document.getElementById('stressStatusBelow');
+const stressValue = document.getElementById('stressValueBelow');
+const leftIndicator = document.getElementById('leftIndicatorBelow');
+const rightIndicator = document.getElementById('rightIndicatorBelow');
+const leftIndicatorLight = document.getElementById('leftIndicatorBelow').querySelector('.indicator-light-below.left');
+const rightIndicatorLight = document.getElementById('rightIndicatorBelow').querySelector('.indicator-light-below.right');
 
 // Settings elements
 const panel = document.getElementById('settings');
@@ -67,6 +67,8 @@ const optRadarOnFoot = document.getElementById('optRadarOnFoot');
 const btnSave = document.getElementById('btnSave');
 const btnClose = document.getElementById('btnClose');
 
+const vehicleStatusBelow = document.getElementById('vehicleStatusBelow');
+
 // Enhanced currentPrefs
 let currentPrefs = {
   visible: true,
@@ -84,6 +86,43 @@ let currentPrefs = {
   showFuel: true,
   showEngine: true,
 };
+
+// Update vehicle status indicators
+function updateVehicleStatus(data) {
+  // Seatbelt status
+  if (data.seatbelt) {
+    seatbeltStatus.classList.add('active');
+    seatbeltStatus.classList.remove('inactive');
+  } else {
+    seatbeltStatus.classList.add('inactive');
+    seatbeltStatus.classList.remove('active');
+  }
+
+  // Stress status
+  const stressLevel = data.stress || 0;
+  stressValue.textContent = stressLevel + '%';
+  
+  if (stressLevel < 30) {
+    stressStatus.className = 'status-item-below low';
+  } else if (stressLevel < 70) {
+    stressStatus.className = 'status-item-below medium';
+  } else {
+    stressStatus.className = 'status-item-below high';
+  }
+
+  // Indicator lights
+  if (data.bl) {
+    leftIndicatorLight.classList.add('active');
+  } else {
+    leftIndicatorLight.classList.remove('active');
+  }
+
+  if (data.br) {
+    rightIndicatorLight.classList.add('active');
+  } else {
+    rightIndicatorLight.classList.remove('active');
+  }
+}
 
 window.addEventListener('message', (e) => {
   const data = e.data || {};
@@ -173,6 +212,11 @@ window.addEventListener('message', (e) => {
         if (engineFill) engineFill.style.height = '0%';
         if (engineText) engineText.textContent = '0%';
       }
+    }
+    
+    // Show/hide vehicle status indicators below speedometer
+    if (vehicleStatusBelow) {
+      vehicleStatusBelow.style.display = data.inVehicle ? 'flex' : 'none';
     }
     
     // Show/hide minimap when not in vehicle (if configured)
@@ -274,23 +318,8 @@ window.addEventListener('message', (e) => {
       engineText.textContent = `${Math.round(enginePercent)}%`;
     }
 
-    // Update vehicle indicators
-    if (leftIndicatorLight && rightIndicatorLight) {
-      leftIndicatorLight.classList.toggle('active', !!data.bl);
-      rightIndicatorLight.classList.toggle('active', !!data.br);
-    }
-
-    // Update seatbelt status
-    if (seatbeltStatus) {
-      seatbeltStatus.classList.remove('active', 'inactive');
-      if (data.seatbelt) {
-        seatbeltStatus.classList.add('active');
-        seatbeltStatus.querySelector('.status-icon').textContent = '🔒';
-      } else {
-        seatbeltStatus.classList.add('inactive');
-        seatbeltStatus.querySelector('.status-icon').textContent = '⚠️';
-      }
-    }
+    // Update vehicle status indicators using the new function
+    updateVehicleStatus(data);
 
     return;
   }

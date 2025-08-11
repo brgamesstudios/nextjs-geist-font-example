@@ -26,27 +26,6 @@
       </div>
     </div>
 
-    <!-- Vehicle Status Indicators -->
-    <div class="vehicle-status" id="vehicleStatus">
-      <div class="status-item" id="seatbeltStatus">
-        <div class="status-icon">🔒</div>
-        <div class="status-text">EMNİYET</div>
-      </div>
-      <div class="status-item" id="stressStatus">
-        <div class="status-icon">😰</div>
-        <div class="status-text">STRES</div>
-        <div class="status-value" id="stressValue">0%</div>
-      </div>
-      <div class="status-item" id="leftIndicator">
-        <div class="indicator-light left"></div>
-        <div class="status-text">SOL</div>
-      </div>
-      <div class="status-item" id="rightIndicator">
-        <div class="indicator-light right"></div>
-        <div class="status-text">SAĞ</div>
-      </div>
-    </div>
-
     <div class="minimap-frame">
       <div class="minimap-overlay" id="minimapOverlay">
         <div class="minimap-north" id="northIndicator">N</div>
@@ -103,6 +82,27 @@
               <div class="engine-fill" id="engineFill"></div>
             </div>
             <div class="engine-text" id="engineText">100%</div>
+          </div>
+        </div>
+        
+        <!-- Vehicle Status Indicators moved below speedometer -->
+        <div class="vehicle-status-below" id="vehicleStatusBelow">
+          <div class="status-item-below" id="seatbeltStatusBelow">
+            <div class="status-icon-below">🔒</div>
+            <div class="status-text-below">EMNİYET</div>
+          </div>
+          <div class="status-item-below" id="stressStatusBelow">
+            <div class="status-icon-below">😰</div>
+            <div class="status-text-below">STRES</div>
+            <div class="status-value-below" id="stressValueBelow">0%</div>
+          </div>
+          <div class="status-item-below" id="leftIndicatorBelow">
+            <div class="indicator-light-below left"></div>
+            <div class="status-text-below">SOL</div>
+          </div>
+          <div class="status-item-below" id="rightIndicatorBelow">
+            <div class="indicator-light-below right"></div>
+            <div class="status-text-below">SAĞ</div>
           </div>
         </div>
       </div>
