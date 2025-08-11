@@ -170,7 +170,7 @@ function updateVisibility() {
 
 // Update vehicle status indicators
 function updateVehicleStatus(data) {
-    console.log('Updating vehicle status:', data);
+    console.log('Updating vehicle status:', JSON.stringify(data, null, 2));
     
     if (!seatbeltStatus || !stressStatus || !stressValue || !leftIndicatorLight || !rightIndicatorLight) {
         console.log('Vehicle status elements not found');
@@ -216,7 +216,7 @@ function updateVehicleStatus(data) {
 function updateSpeedometer(data) {
     if (!data.inVehicle) return;
     
-    console.log('Updating speedometer:', data);
+    console.log('Updating speedometer:', JSON.stringify(data, null, 2));
     console.log('Speedometer elements check:', {
         speed: !!speed,
         speedArc: !!speedArc,
@@ -267,7 +267,7 @@ function updateSpeedometer(data) {
 
 // Update player stats
 function updatePlayerStats(data) {
-    console.log('Updating player stats:', data);
+    console.log('Updating player stats:', JSON.stringify(data, null, 2));
     
     // Update mini rings
     if (miniHp) miniHp.textContent = Math.round(data.hp || 100);
@@ -284,7 +284,7 @@ function updatePlayerStats(data) {
 
 // Update minimap
 function updateMinimap(data) {
-    console.log('Updating minimap:', data);
+    console.log('Updating minimap:', JSON.stringify(data, null, 2));
     
     if (northIndicator) {
         const heading = data.heading || 0;
@@ -299,7 +299,7 @@ function updateMinimap(data) {
 
 // Update wallet info
 function updateWallet(data) {
-    console.log('Updating wallet:', data);
+    console.log('Updating wallet:', JSON.stringify(data, null, 2));
     
     if (playerId) playerId.textContent = 'ID: ' + (data.id || 0);
     if (cash) cash.textContent = '$' + (data.bank || 0).toLocaleString();
@@ -308,7 +308,7 @@ function updateWallet(data) {
 
 // Update clock
 function updateClock(data) {
-    console.log('Updating clock:', data);
+    console.log('Updating clock:', JSON.stringify(data, null, 2));
     
     if (clock) {
         const hour = String(data.hour || 0).padStart(2, '0');
@@ -319,7 +319,7 @@ function updateClock(data) {
 
 // Update voice indicator
 function updateVoice(data) {
-    console.log('Updating voice:', data);
+    console.log('Updating voice:', JSON.stringify(data, null, 2));
     
     if (voice) {
         if (data.talking) {
@@ -391,7 +391,7 @@ function saveSettings() {
 // NUI message handler
 window.addEventListener('message', (e) => {
     const data = e.data;
-    console.log('NUI Message received:', data.action, data);
+    console.log('NUI Message received:', data.action, JSON.stringify(data, null, 2));
     
     switch (data.action) {
         case 'show':
