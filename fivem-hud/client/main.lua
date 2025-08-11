@@ -246,6 +246,7 @@ CreateThread(function()
         -- Send vehicle data to NUI
         SendNUIMessage({
           action = 'tick',
+          inVehicle = true,
           speed = math.floor(speed),
           gear = gear,
           rpm = rpm,
@@ -260,6 +261,7 @@ CreateThread(function()
       -- Player is not in vehicle, send empty vehicle data
       SendNUIMessage({
         action = 'tick',
+        inVehicle = false,
         speed = 0,
         gear = 0,
         rpm = 0,
