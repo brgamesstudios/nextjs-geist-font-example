@@ -3,12 +3,16 @@ local MM_Circle = Config.CircleMinimap
 local MM_RadarAlwaysOn = Config.RadarAlwaysOn
 local MM_RadarOnFoot = Config.RadarOnFoot
 local MM_RadarZoom = Config.RadarZoom
+local MM_ShowDefault = Config.ShowDefaultRadar
+local MM_Scale = Config.MinimapScale or 1.0
 
 local function setupCircleMinimap()
   SetMinimapClipType(1)
-  SetMinimapComponentPosition('minimap', 'L', 'B', 0.015, 0.02, 0.18, 0.30)
-  SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.155, 0.12, 0.08, 0.16)
-  SetMinimapComponentPosition('minimap_blur', 'L', 'B', 0.00, 0.00, 0.25, 0.35)
+  local w = 0.18 * MM_Scale
+  local h = 0.30 * MM_Scale
+  SetMinimapComponentPosition('minimap', 'L', 'B', 0.015, 0.02, w, h)
+  SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
+  SetMinimapComponentPosition('minimap_blur', 'L', 'B', 0.00, 0.00, 0.25 * MM_Scale, 0.35 * MM_Scale)
 end
 
 local function setupSquareMinimap()
@@ -22,6 +26,7 @@ RegisterNetEvent('fivem-hud:applyPrefs', function(p)
   if p.radarAlwaysOn ~= nil then MM_RadarAlwaysOn = p.radarAlwaysOn end
   if p.radarOnFoot ~= nil then MM_RadarOnFoot = p.radarOnFoot end
   if p.radarZoom ~= nil then MM_RadarZoom = p.radarZoom end
+  if p.minimapScale ~= nil then MM_Scale = p.minimapScale end
   if MM_UseMinimap then
     if MM_Circle then setupCircleMinimap() else setupSquareMinimap() end
   end
@@ -39,7 +44,7 @@ CreateThread(function()
     if MM_UseMinimap then
       local ped = PlayerPedId()
       local inVehicle = IsPedInAnyVehicle(ped, false)
-      local show = Config.RadarAlwaysOn or (inVehicle or Config.RadarOnFoot)
+      local show = (MM_ShowDefault and (MM_RadarAlwaysOn or inVehicle or MM_RadarOnFoot))
       DisplayRadar(show)
       if show and MM_RadarZoom then SetRadarZoom(MM_RadarZoom) end
     else
@@ -48,21 +53,20 @@ CreateThread(function()
 
     if Config.HideDefaultHud then
       DisplayHud(false)
-      -- Hide various default components
-      HideHudComponentThisFrame(1)   -- Wanted Stars
-      HideHudComponentThisFrame(2)   -- Weapon Icon
-      HideHudComponentThisFrame(3)   -- Cash
-      HideHudComponentThisFrame(4)   -- MP Cash
-      HideHudComponentThisFrame(6)   -- Vehicle Name
-      HideHudComponentThisFrame(7)   -- Area Name
-      HideHudComponentThisFrame(8)   -- Vehicle Class
-      HideHudComponentThisFrame(9)   -- Street Name
-      HideHudComponentThisFrame(13)  -- Cash Change
-      HideHudComponentThisFrame(14)  -- Reticle
-      HideHudComponentThisFrame(17)  -- Save Game
-      HideHudComponentThisFrame(20)  -- Weapon Stats
-      HideHudComponentThisFrame(21)  -- HUD Components
-      HideHudComponentThisFrame(22)  -- Wanted Stars (alt)
+      HideHudComponentThisFrame(1)
+      HideHudComponentThisFrame(2)
+      HideHudComponentThisFrame(3)
+      HideHudComponentThisFrame(4)
+      HideHudComponentThisFrame(6)
+      HideHudComponentThisFrame(7)
+      HideHudComponentThisFrame(8)
+      HideHudComponentThisFrame(9)
+      HideHudComponentThisFrame(13)
+      HideHudComponentThisFrame(14)
+      HideHudComponentThisFrame(17)
+      HideHudComponentThisFrame(20)
+      HideHudComponentThisFrame(21)
+      HideHudComponentThisFrame(22)
     end
 
     SetBigmapActive(false, false)

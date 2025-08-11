@@ -14,7 +14,7 @@ Config.ShowFuel = true
 Config.ShowEngine = true
 Config.ShowIndicators = true
 Config.MetricSpeed = false        -- false = mph, true = km/h
-Config.HideDefaultHud = true      -- hide GTA default HUD elements
+Config.HideDefaultHud = false     -- show GTA default HUD elements
 
 -- Minimap
 Config.UseMinimap = true
@@ -22,6 +22,9 @@ Config.CircleMinimap = true
 Config.RadarAlwaysOn = false
 Config.RadarOnFoot = false        -- show radar when on foot
 Config.RadarZoom = 1100
+Config.ShowDefaultRadar = true    -- show GTA radar (recommended true)
+Config.MinimapDetailed = true     -- show extra overlay ticks/heading
+Config.MinimapScale = 1.0         -- 1.0 = default size
 
 -- Update rates (ms)
 Config.TickMs = 100               -- main HUD update

@@ -285,6 +285,7 @@ RegisterNUICallback('applySettings', function(data, cb)
     radarOnFoot = data.radarOnFoot,
     radarAlwaysOn = Config.RadarAlwaysOn,
     radarZoom = Config.RadarZoom,
+    minimapScale = Config.MinimapScale,
   })
 
   cb('ok')
