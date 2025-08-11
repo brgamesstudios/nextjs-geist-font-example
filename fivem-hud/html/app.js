@@ -214,7 +214,9 @@ function updateVehicleStatus(data) {
 
 // Update speedometer
 function updateSpeedometer(data) {
-    if (!data.inVehicle) return;
+    // Check if player is in vehicle (either from inVehicle flag or from speed > 0)
+    const isInVehicle = data.inVehicle !== undefined ? data.inVehicle : (data.speed > 0 || data.gear > 0);
+    if (!isInVehicle) return;
     
     console.log('Updating speedometer:', JSON.stringify(data, null, 2));
     console.log('Speedometer elements check:', {
@@ -258,10 +260,15 @@ function updateSpeedometer(data) {
     
     // Update engine
     if (data.engine !== undefined) {
-        const enginePercentage = Math.max(0, Math.min(100, data.engine));
+        // Normalize engine health: if > 100, assume it's 0-1000 scale and convert to 0-100
+        let engineValue = data.engine;
+        if (engineValue > 100) {
+            engineValue = engineValue / 10; // Convert 0-1000 to 0-100
+        }
+        const enginePercentage = Math.max(0, Math.min(100, engineValue));
         engineFill.style.height = enginePercentage + '%';
         engineText.textContent = Math.round(enginePercentage) + '%';
-        console.log('Engine updated:', enginePercentage + '%');
+        console.log('Engine updated:', enginePercentage + '%', 'from raw value:', data.engine);
     }
 }
 
