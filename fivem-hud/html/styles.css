@@ -52,14 +52,13 @@ html, body {
   font-weight: 700;
   font-size: 16px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
 #compass:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -70,14 +69,13 @@ html, body {
   font-weight: 600;
   font-size: 14px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
 #street:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -89,14 +87,13 @@ html, body {
   padding: 8px 16px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
 .voice:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -139,16 +136,15 @@ html, body {
   font-weight: 600;
   font-size: 13px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   min-width: 80px;
   text-align: center;
 }
 
 .chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -158,8 +154,7 @@ html, body {
   font-weight: 700;
   font-size: 16px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   min-width: 80px;
   text-align: center;
@@ -167,7 +162,7 @@ html, body {
 
 .clock:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -240,7 +235,6 @@ html, body {
   gap: 8px;
   border-radius: 20px;
   padding: 20px;
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 #speed { font-size: 40px; font-weight: 800; }
@@ -344,7 +338,6 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(5px);
   z-index: 10000;
   opacity: 0;
   visibility: hidden;
@@ -360,10 +353,9 @@ html, body {
 }
 
 .settings-card {
-  backdrop-filter: blur(20px);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   padding: 30px;
   max-width: 500px;
   width: 90%;
@@ -448,8 +440,7 @@ html, body {
 
 .btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 .btn.primary {
@@ -458,8 +449,8 @@ html, body {
 }
 
 .btn.primary:hover {
-  background: linear-gradient(135deg, #45a049, #3d8b40);
-  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.12);
 }
 
 /* Enhanced Rings */
@@ -474,16 +465,18 @@ html, body {
   width: 80px;
   height: 80px;
   border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 .ring:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .ring::before {
@@ -491,7 +484,6 @@ html, body {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -533,15 +525,14 @@ html, body {
   gap: 20px;
   border-radius: 25px;
   padding: 20px;
-  backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .speedo:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -663,7 +654,6 @@ html, body {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -712,14 +702,13 @@ html, body {
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
   transition: all 0.3s ease;
   min-width: 60px;
 }
 
 .status-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
