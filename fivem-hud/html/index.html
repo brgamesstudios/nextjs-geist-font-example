@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HUD</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="root" class="hud hidden">
+    <div class="top">
+      <div id="compass">N</div>
+      <div id="street">Popular St • La Mesa</div>
+      <div id="voice" class="voice">
+        <div class="dot"></div>
+        <span id="voiceLevel">N</span>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="left">
+        <div class="bar hp"><span id="hpText">100</span></div>
+        <div class="bar armor"><span id="armorText">0</span></div>
+      </div>
+      <div class="center" id="vehicleBlock">
+        <div class="speed">
+          <span id="speed">0</span>
+          <small id="speedUnit">MPH</small>
+        </div>
+        <div class="veh-meta">
+          <span id="gear">N</span>
+          <span id="rpm">0.0</span>
+          <span id="seatbelt" class="chip">BELT</span>
+        </div>
+      </div>
+      <div class="right">
+        <!-- reserved for future stats -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
