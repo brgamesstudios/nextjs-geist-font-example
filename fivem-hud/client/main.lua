@@ -289,3 +289,9 @@ RegisterNUICallback('applySettings', function(data, cb)
 
   cb('ok')
 end)
+
+-- Wallet updates from server (QBCore)
+RegisterNetEvent('fivem-hud:wallet', function(data)
+  if type(data) ~= 'table' then return end
+  SendNUIMessage({ action = 'wallet', playerId = data.id, cash = data.cash, bank = data.bank })
+end)

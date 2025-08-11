@@ -3,23 +3,31 @@ const compass = document.getElementById('compass');
 const street = document.getElementById('street');
 const voice = document.getElementById('voice');
 const voiceLevelText = document.getElementById('voiceLevel');
-const hpText = document.getElementById('hpText');
-const armorText = document.getElementById('armorText');
-const speedEl = document.getElementById('speed');
-const speedUnitEl = document.getElementById('speedUnit');
-const gearEl = document.getElementById('gear');
-const rpmEl = document.getElementById('rpm');
-const seatbeltEl = document.getElementById('seatbelt');
-const vehicleBlock = document.getElementById('vehicleBlock');
-const stressBar = document.getElementById('stressBar');
-const stressText = document.getElementById('stressText');
 const northIndicator = document.getElementById('northIndicator');
 const minimapFrame = document.getElementById('minimapFrame');
+
+// top-left
 const clockEl = document.getElementById('clock');
-const fuelEl = document.getElementById('fuel');
-const engineEl = document.getElementById('engine');
-const indLEl = document.getElementById('indL');
-const indREl = document.getElementById('indR');
+const playerIdEl = document.getElementById('playerId');
+const cashEl = document.getElementById('cash');
+const bankEl = document.getElementById('bank');
+
+// circular speedo
+const speedo = document.getElementById('speedo');
+const speedArc = document.getElementById('speedArc');
+const speedNum = document.getElementById('speedNum');
+const speedUnitEl = document.getElementById('speedUnit');
+const speedGearEl = document.getElementById('speedGear');
+
+// right rings
+const ringHp = document.getElementById('ringHp');
+const ringArmor = document.getElementById('ringArmor');
+const ringHunger = document.getElementById('ringHunger');
+const ringThirst = document.getElementById('ringThirst');
+const hpVal = document.getElementById('hpVal');
+const armorVal = document.getElementById('armorVal');
+const hungerVal = document.getElementById('hungerVal');
+const thirstVal = document.getElementById('thirstVal');
 
 // Settings elements
 const panel = document.getElementById('settings');
@@ -45,9 +53,6 @@ let currentPrefs = {
   showCompass: true,
   showStreetZone: true,
   showClock: true,
-  showFuel: true,
-  showEngine: true,
-  showIndicators: true,
   useVoice: true,
   useStress: true,
   useMinimap: true,
@@ -68,9 +73,6 @@ window.addEventListener('message', (e) => {
     currentPrefs.showCompass = !!data.showCompass;
     currentPrefs.showStreetZone = !!data.showStreetZone;
     currentPrefs.showClock = !!data.showClock;
-    currentPrefs.showFuel = !!data.showFuel;
-    currentPrefs.showEngine = !!data.showEngine;
-    currentPrefs.showIndicators = !!data.showIndicators;
     currentPrefs.useVoice = !!data.useVoice;
     currentPrefs.useStress = !!data.useStress;
     currentPrefs.useMinimap = !!data.useMinimap;
@@ -79,11 +81,9 @@ window.addEventListener('message', (e) => {
     document.getElementById('voice').style.display = currentPrefs.useVoice ? 'flex' : 'none';
     compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
     street.style.display = currentPrefs.showStreetZone ? 'block' : 'none';
-    if (stressBar) stressBar.style.display = currentPrefs.useStress ? 'block' : 'none';
     if (minimapFrame) minimapFrame.style.display = currentPrefs.useMinimap ? 'block' : 'none';
     if (clockEl) clockEl.style.display = currentPrefs.showClock ? 'block' : 'none';
 
-    // Reflect in panel if open
     if (panel && !panel.classList.contains('hidden')) populateSettings();
     return;
   }
@@ -92,6 +92,12 @@ window.addEventListener('message', (e) => {
       populateSettings();
       panel.classList.remove('hidden');
     }
+    return;
+  }
+  if (data.action === 'wallet') {
+    if (data.playerId !== undefined) playerIdEl.textContent = `${data.playerId}`;
+    if (data.cash !== undefined) cashEl.textContent = `${data.cash}`;
+    if (data.bank !== undefined) bankEl.textContent = `${data.bank}`;
     return;
   }
   if (data.action === 'street') {
@@ -103,63 +109,33 @@ window.addEventListener('message', (e) => {
     voiceLevelText.textContent = ['W','N','S','X'][Math.min(3, Math.max(0, data.level || 0))] || 'N';
     return;
   }
-  if (data.action === 'seatbelt') {
-    seatbeltEl.classList.toggle('on', !!data.on);
-    return;
-  }
   if (data.action === 'tick') {
-    // Health/armor
-    hpText.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;
-    armorText.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
-    document.querySelector('.bar.hp').style.setProperty('--hpw', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
-    document.querySelector('.bar.armor').style.setProperty('--armw', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
+    // Speedo arc
+    speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
+    speedNum.textContent = `${data.speed || 0}`;
+    speedGearEl.textContent = data.gear === 0 ? 'N' : `${data.gear}`;
+    const maxSpeed = currentPrefs.metric ? 240 : 160; // visual cap
+    const fraction = Math.max(0, Math.min(1, (data.speed || 0) / maxSpeed));
+    const totalLen = 326;
+    speedArc.style.strokeDashoffset = `${totalLen - totalLen * fraction}`;
 
-    // Stress
-    if (stressBar) {
-      const s = Math.max(0, Math.min(100, Math.round(data.stress || 0)));
-      stressText.textContent = `${s}`;
-      stressBar.style.setProperty('--stw', `${s}%`);
-    }
-
-    // Vehicle
-    vehicleBlock.style.display = data.inVehicle ? 'flex' : 'none';
-    speedUnitEl.textContent = (currentPrefs.metric || false) ? 'KMH' : 'MPH';
-    speedEl.textContent = `${data.speed || 0}`;
-
-    const speedWrap = document.querySelector('.speed');
-    speedWrap.classList.remove('warn', 'danger');
-    if (data.speed >= (window.speedDanger || 120)) speedWrap.classList.add('danger');
-    else if (data.speed >= (window.speedWarn || 80)) speedWrap.classList.add('warn');
-
-    gearEl.textContent = data.gear === 0 ? 'N' : `${data.gear}`;
-    rpmEl.textContent = (data.rpm || 0).toFixed(1);
-
-    // Extra vehicle info
-    if (fuelEl) {
-      fuelEl.style.display = currentPrefs.showFuel ? 'inline-block' : 'none';
-      fuelEl.textContent = `FUEL ${data.fuel ?? 0}`;
-      fuelEl.classList.toggle('warn', (data.fuel ?? 0) <= 25);
-      fuelEl.classList.toggle('danger', (data.fuel ?? 0) <= 10);
-    }
-    if (engineEl) {
-      engineEl.style.display = currentPrefs.showEngine ? 'inline-block' : 'none';
-      engineEl.textContent = `ENG ${data.engine ?? 0}`;
-      engineEl.classList.toggle('warn', (data.engine ?? 100) <= 50);
-      engineEl.classList.toggle('danger', (data.engine ?? 100) <= 25);
-    }
-    if (indLEl && indREl) {
-      indLEl.style.display = currentPrefs.showIndicators ? 'inline-block' : 'none';
-      indREl.style.display = currentPrefs.showIndicators ? 'inline-block' : 'none';
-      indLEl.classList.toggle('on', !!data.bl);
-      indREl.classList.toggle('on', !!data.br);
-    }
+    // Right rings
+    hpVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;
+    armorVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
+    ringHp.style.setProperty('--hp', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
+    ringArmor.style.setProperty('--arm', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
+    // hunger/thirst placeholders if not wired
+    const hun = Math.max(0, Math.min(100, Math.round(data.hunger ?? 100)));
+    const thr = Math.max(0, Math.min(100, Math.round(data.thirst ?? 100)));
+    hungerVal.textContent = `${hun}`;
+    thirstVal.textContent = `${thr}`;
+    ringHunger.style.setProperty('--hun', `${hun}%`);
+    ringThirst.style.setProperty('--thr', `${thr}%`);
 
     // Compass + minimap north
     const heading = data.heading || 0;
     compass.textContent = headingToCardinal(heading);
-    if (northIndicator) {
-      northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
-    }
+    if (northIndicator) northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
 
     // Clock
     if (clockEl && currentPrefs.showClock) {
@@ -167,8 +143,6 @@ window.addEventListener('message', (e) => {
       const mm = String(data.minute ?? 0).padStart(2, '0');
       clockEl.textContent = `${hh}:${mm}`;
     }
-
-    seatbeltEl.classList.toggle('on', !!data.seatbelt);
     return;
   }
 });
@@ -183,9 +157,6 @@ function populateSettings() {
   optStress.checked = !!currentPrefs.useStress;
   optMinimap.checked = !!currentPrefs.useMinimap;
   optClock.checked = !!currentPrefs.showClock;
-  optFuel.checked = !!currentPrefs.showFuel;
-  optEngine.checked = !!currentPrefs.showEngine;
-  optIndicators.checked = !!currentPrefs.showIndicators;
   optCircle.checked = true;
   optRadarOnFoot.checked = false;
 }
@@ -197,9 +168,6 @@ btnSave?.addEventListener('click', () => {
     showCompass: !!optCompass.checked,
     showStreetZone: !!optStreet.checked,
     showClock: !!optClock.checked,
-    showFuel: !!optFuel.checked,
-    showEngine: !!optEngine.checked,
-    showIndicators: !!optIndicators.checked,
     useVoice: !!optVoice.checked,
     useStress: !!optStress.checked,
     useMinimap: !!optMinimap.checked,
@@ -207,36 +175,13 @@ btnSave?.addEventListener('click', () => {
     radarOnFoot: !!optRadarOnFoot.checked,
   };
   fetch(`https://fivem-hud/applySettings`, { method: 'POST', body: JSON.stringify(payload) })
-    .then(() => {
-      panel.classList.add('hidden');
-      fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {});
-    })
+    .then(() => { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); })
     .catch(() => {});
 });
 
-btnClose?.addEventListener('click', () => {
-  panel.classList.add('hidden');
-  fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {});
-});
+btnClose?.addEventListener('click', () => { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); } });
 
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    panel.classList.add('hidden');
-    fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {});
-  }
-});
+function headingToCardinal(h) { const dirs = ['N','NE','E','SE','S','SW','W','NW','N']; const idx = Math.round(h / 45); return dirs[idx]; }
 
-function headingToCardinal(h) {
-  const dirs = ['N','NE','E','SE','S','SW','W','NW','N'];
-  const idx = Math.round(h / 45);
-  return dirs[idx];
-}
-
-// Notify Lua we're ready
-window.addEventListener('DOMContentLoaded', () => {
-  fetch(`https://fivem-hud/ready`, { method: 'POST', body: '{}' }).catch(() => {});
-});
-
-// Defaults still used for speed coloring
-window.speedWarn = 80;
-window.speedDanger = 120;
+window.addEventListener('DOMContentLoaded', () => { fetch(`https://fivem-hud/ready`, { method: 'POST', body: '{}' }).catch(() => {}); });

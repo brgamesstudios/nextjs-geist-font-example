@@ -8,6 +8,15 @@
 </head>
 <body>
   <div id="root" class="hud hidden">
+    <div class="top-left">
+      <div class="row">
+        <div class="chip" id="playerIdChip">ID <span id="playerId">0</span></div>
+        <div class="chip" id="cashChip">$<span id="cash">0</span></div>
+        <div class="chip" id="bankChip">BANK $<span id="bank">0</span></div>
+        <div class="clock" id="clock">12:00</div>
+      </div>
+    </div>
+
     <div class="top">
       <div id="compass">N</div>
       <div id="street">Popular St • La Mesa</div>
@@ -15,7 +24,6 @@
         <div class="dot"></div>
         <span id="voiceLevel">N</span>
       </div>
-      <div class="clock" id="clock">12:00</div>
     </div>
 
     <div class="minimap-frame" id="minimapFrame">
@@ -24,27 +32,27 @@
 
     <div class="bottom">
       <div class="left">
-        <div class="bar hp"><span id="hpText">100</span></div>
-        <div class="bar armor"><span id="armorText">0</span></div>
-        <div class="bar stress" id="stressBar"><span id="stressText">0</span></div>
+        <div class="speedo" id="speedo">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" class="sp-bg" />
+            <circle cx="60" cy="60" r="52" class="sp-fg" id="speedArc" />
+          </svg>
+          <div class="speedo-center">
+            <div class="speed-main"><span id="speedNum">0</span><small id="speedUnit">MPH</small></div>
+            <div class="speed-gear" id="speedGear">N</div>
+          </div>
+        </div>
       </div>
       <div class="center" id="vehicleBlock">
-        <div class="speed">
-          <span id="speed">0</span>
-          <small id="speedUnit">MPH</small>
-        </div>
-        <div class="veh-meta">
-          <span id="gear">N</span>
-          <span id="rpm">0.0</span>
-          <span id="seatbelt" class="chip">BELT</span>
-          <span id="fuel" class="chip">FUEL 0</span>
-          <span id="engine" class="chip">ENG 100</span>
-          <span id="indL" class="chip">◀</span>
-          <span id="indR" class="chip">▶</span>
-        </div>
+        <!-- reserved if needed for future -->
       </div>
       <div class="right">
-        <!-- reserved for future stats -->
+        <div class="rings">
+          <div class="ring ring-hp" id="ringHp"><div class="ring-inner"><span>HP</span><div id="hpVal">100</div></div></div>
+          <div class="ring ring-armor" id="ringArmor"><div class="ring-inner"><span>AR</span><div id="armorVal">0</div></div></div>
+          <div class="ring ring-hunger" id="ringHunger"><div class="ring-inner"><span>FOOD</span><div id="hungerVal">100</div></div></div>
+          <div class="ring ring-thirst" id="ringThirst"><div class="ring-inner"><span>WATER</span><div id="thirstVal">100</div></div></div>
+        </div>
       </div>
     </div>
 
