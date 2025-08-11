@@ -1,301 +1,197 @@
-local ESX = exports['es_extended']:getSharedObject()
-local Utils = require 'shared/utils'
+local okUtils, Utils = pcall(require, 'shared.utils')
+if not okUtils then Utils = _G.AM_Utils or {} end
 
-local uiOpen = false
-local lastVehicle = 0
-local currentLift = nil
-
-local function notify(message)
-    if Config.NotificationType == 'esx' then
-        ESX.ShowNotification(message)
-    else
-        TriggerEvent('chat:addMessage', { args = { '[Mechanic]', message } })
+local ESX
+CreateThread(function()
+  if GetResourceState('es_extended') == 'started' then
+    if exports and exports['es_extended'] and exports['es_extended'].getSharedObject then
+      ESX = exports['es_extended']:getSharedObject()
     end
-end
+  end
+  if not ESX then
+    TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+  end
+end)
 
-local function drawMarkerAt(markerCfg, coords)
-    DrawMarker(
-        markerCfg.type or 1,
-        coords.x, coords.y, coords.z - 1.0,
-        0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0,
-        (markerCfg.scale and markerCfg.scale.x) or 1.0,
-        (markerCfg.scale and markerCfg.scale.y) or 1.0,
-        (markerCfg.scale and markerCfg.scale.z) or 1.0,
-        (markerCfg.color and markerCfg.color.r) or 0,
-        (markerCfg.color and markerCfg.color.g) or 150,
-        (markerCfg.color and markerCfg.color.b) or 255,
-        (markerCfg.color and markerCfg.color.a) or 150,
-        false, false, 2, false, nil, nil, false
-    )
-end
-
-local function createBlip(cfg)
-    local blip = AddBlipForCoord(cfg.coords.x, cfg.coords.y, cfg.coords.z)
-    SetBlipSprite(blip, (cfg.blip and cfg.blip.sprite) or 402)
-    SetBlipScale(blip, (cfg.blip and cfg.blip.scale) or 0.8)
-    SetBlipColour(blip, (cfg.blip and cfg.blip.color) or 3)
-    SetBlipAsShortRange(blip, true)
-    BeginTextCommandSetBlipName('STRING')
-    AddTextComponentString((cfg.blip and cfg.blip.name) or 'Mechanic')
-    EndTextCommandSetBlipName(blip)
-end
-
-local function getClosestVehicle(coords, radius)
-    local vehicles = GetGamePool('CVehicle')
-    local closest, closestDist = 0, radius or 5.0
-    for _, veh in ipairs(vehicles) do
-        local vehCoords = GetEntityCoords(veh)
-        local dist = #(vehCoords - coords)
-        if dist < closestDist then
-            closest = veh
-            closestDist = dist
-        end
-    end
-    return closest
-end
-
-local function getPlayerJob()
-    local xPlayer = ESX.GetPlayerData()
-    return (xPlayer and xPlayer.job) or { name = 'unemployed', grade = 0 }
-end
+local isUiOpen = false
 
 local function isMechanic()
-    local job = getPlayerJob()
-    return Utils.hasMechanicJob(job.name, job.grade)
+  if not ESX or not ESX.GetPlayerData then return false end
+  local playerData = ESX.GetPlayerData()
+  if not playerData or not playerData.job then return false end
+  return playerData.job.name == Config.MechanicJobName and playerData.job.grade >= Config.MinimumJobGrade
 end
 
-local function gatherVehicleData(vehicle)
-    if vehicle == 0 then return nil end
-    local class = GetVehicleClass(vehicle)
-    local health = Utils.getVehicleHealthPercent(vehicle)
-    local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
-    local modelHash = GetEntityModel(vehicle)
-    local displayName = GetDisplayNameFromVehicleModel(modelHash)
-    return {
-        plate = plate,
-        class = class,
-        model = displayName,
-        health = health
-    }
-end
-
-local function sendUI(action, data)
-    SendNUIMessage({ action = action, data = data })
-end
-
-local function openUI()
-    if uiOpen then return end
-    if not isMechanic() then
-        notify(Config.Text.not_mechanic)
-        return
+local function getVehicleData()
+  local ped = PlayerPedId()
+  local vehicle = GetVehiclePedIsIn(ped, false)
+  if vehicle == 0 then
+    vehicle = GetVehiclePedIsIn(ped, true)
+  end
+  if vehicle == 0 then
+    -- Try vehicle in front of player
+    local coords = GetEntityCoords(ped)
+    local forward = GetEntityForwardVector(ped)
+    local target = coords + forward * 3.0
+    local ray = StartShapeTestRay(coords.x, coords.y, coords.z, target.x, target.y, target.z, 10, ped, 0)
+    local _, hit, endCoords, surfaceNormal, entityHit = GetShapeTestResult(ray)
+    if entityHit and entityHit ~= 0 and IsEntityAVehicle(entityHit) then
+      vehicle = entityHit
     end
-    uiOpen = true
-    SetNuiFocus(true, true)
+  end
 
-    local ped = PlayerPedId()
-    local veh = GetVehiclePedIsIn(ped, false)
-    if veh == 0 then veh = getClosestVehicle(GetEntityCoords(ped), 6.0) end
-    lastVehicle = veh
+  if vehicle == 0 then return { hasVehicle = false } end
 
-    local vehData = gatherVehicleData(veh)
-    sendUI('show', { vehicle = vehData, parts = nil })
-    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
-        sendUI('updatePartsInventory', parts or {})
-    end)
+  local engineHealth = GetVehicleEngineHealth(vehicle)
+  local bodyHealth = GetVehicleBodyHealth(vehicle)
+  local healthPercent = Utils.getVehicleHealthPercent and Utils.getVehicleHealthPercent(engineHealth, bodyHealth) or 100.0
+  local displayName = GetDisplayNameFromVehicleModel(GetEntityModel(vehicle))
+  local plate = GetVehicleNumberPlateText(vehicle)
+
+  return {
+    hasVehicle = true,
+    plate = plate or 'UNKNOWN',
+    model = displayName or 'VEHICLE',
+    engineHealth = engineHealth,
+    bodyHealth = bodyHealth,
+    healthPercent = healthPercent
+  }
 end
 
-local function closeUI()
-    if not uiOpen then return end
-    uiOpen = false
-    SetNuiFocus(false, false)
-    sendUI('hide', {})
+local function sendNotification(msg, type)
+  SendNUIMessage({ action = 'notification', message = msg, type = type or Config.Notification.info })
 end
 
-local function playProgress(label, durationMs)
-    if Config.UseProgressBarsExport and exports and exports['progressBars'] then
-        -- try commonly used exports
-        if exports['progressBars'].startUI then
-            exports['progressBars']:startUI(durationMs, label)
-            Wait(durationMs)
-            return
-        elseif exports['progressBars'].custom then
-            exports['progressBars']:custom({
-                Duration = durationMs,
-                Label = label,
-                Animation = {scenario = 'WORLD_HUMAN_VEHICLE_MECHANIC'},
-                DisableControls = true,
-                CanCancel = false,
-            })
-            Wait(durationMs)
-            return
-        end
-    end
-    sendUI('showProgress', { label = label, duration = durationMs })
-    Wait(durationMs)
-    sendUI('hideProgress')
+local function requestAndSendParts()
+  if not ESX or not ESX.TriggerServerCallback then return end
+  ESX.TriggerServerCallback('advanced_mechanic:getParts', function(parts)
+    SendNUIMessage({ action = 'updatePartsInventory', parts = parts or {} })
+  end)
 end
 
-local function performRepair(repairKey)
-    if lastVehicle == 0 or not DoesEntityExist(lastVehicle) then
-        notify(Config.Text.no_vehicle)
-        return
-    end
-
-    ESX.TriggerServerCallback('mechanic:hasRequiredParts', function(hasParts, missing)
-        if not hasParts then
-            if missing and #missing > 0 then
-                notify('Missing parts: ' .. table.concat(missing, ', '))
-            else
-                notify('You do not have the required parts.')
-            end
-            return
-        end
-
-        local repairData = Utils.getRepairData(repairKey)
-        if not repairData then return end
-
-        TaskStartScenarioInPlace(PlayerPedId(), 'WORLD_HUMAN_VEHICLE_MECHANIC', 0, true)
-        playProgress(Config.Text.repairing, repairData.time)
-        ClearPedTasks(PlayerPedId())
-
-        -- consume parts
-        TriggerServerEvent('mechanic:consumeParts', repairData.parts)
-
-        -- apply repair effect
-        SetVehicleFixed(lastVehicle)
-        SetVehicleDeformationFixed(lastVehicle)
-        SetVehicleEngineHealth(lastVehicle, 1000.0)
-        SetVehicleBodyHealth(lastVehicle, 1000.0)
-
-        local vehData = gatherVehicleData(lastVehicle)
-        sendUI('updateVehicleData', vehData)
-        notify('Repair completed!')
-    end, repairKey)
+local function openMechanicUi()
+  if isUiOpen then return end
+  isUiOpen = true
+  SetNuiFocus(true, true)
+  SendNUIMessage({ action = 'show' })
+  -- seed data
+  SendNUIMessage({ action = 'updateVehicleData', data = getVehicleData() })
+  requestAndSendParts()
 end
 
--- NUI Callbacks
-RegisterNUICallback('close', function(_, cb)
-    closeUI()
-    cb('ok')
-end)
+local function closeMechanicUi()
+  if not isUiOpen then return end
+  isUiOpen = false
+  SetNuiFocus(false, false)
+  SendNUIMessage({ action = 'hide' })
+end
 
-RegisterNUICallback('buyPart', function(data, cb)
-    local part = data and data.part
-    local qty = tonumber(data and data.quantity) or 1
-    if not part or not Utils.isValidPart(part) then cb('invalid'); return end
-    TriggerServerEvent('mechanic:buyPart', part, qty)
-    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
-        sendUI('updatePartsInventory', parts or {})
-    end)
-    cb('ok')
-end)
-
-RegisterNUICallback('performRepair', function(data, cb)
-    local repairKey = data and data.repair
-    if not repairKey then cb('invalid'); return end
-    performRepair(repairKey)
-    cb('ok')
-end)
-
-RegisterNUICallback('requestPartsInventory', function(_, cb)
-    ESX.TriggerServerCallback('mechanic:getPartsInventory', function(parts)
-        sendUI('updatePartsInventory', parts or {})
-        cb(parts or {})
-    end)
-end)
-
--- Commands
 RegisterCommand('mechanic', function()
-    openUI()
+  if not isMechanic() then
+    sendNotification('You must be a mechanic to use this.', Config.Notification.error)
+    return
+  end
+  openMechanicUi()
 end)
 
--- Markers & interactions
-CreateThread(function()
-    createBlip(Config.MainShop)
+RegisterNUICallback('nui:action', function(data, cb)
+  cb = cb or function() end
+  if not data or not data.type then cb({ ok = false, error = 'invalid_payload' }) return end
 
-    while true do
-        local sleep = 1000
-        local ped = PlayerPedId()
-        local coords = GetEntityCoords(ped)
+  if data.type == 'close' then
+    closeMechanicUi()
+    cb({ ok = true })
+    return
+  end
 
-        -- Main shop
-        local distShop = #(coords - Config.MainShop.coords)
-        if distShop < 25.0 then
-            sleep = 0
-            drawMarkerAt(Config.MainShop.marker, Config.MainShop.coords)
-            if distShop < 2.0 then
-                ESX.ShowHelpNotification(Config.Text.press_e_open)
-                if IsControlJustReleased(0, 38) then -- E
-                    openUI()
-                end
-            end
-        end
+  if data.type == 'requestVehicleData' then
+    SendNUIMessage({ action = 'updateVehicleData', data = getVehicleData() })
+    cb({ ok = true })
+    return
+  end
 
-        -- Parts storage
-        local distStore = #(coords - Config.PartsStorage.coords)
-        if distStore < 15.0 then
-            sleep = 0
-            drawMarkerAt(Config.PartsStorage.marker, Config.PartsStorage.coords)
-            if distStore < 2.0 then
-                ESX.ShowHelpNotification(Config.Text.press_e_storage)
-                if IsControlJustReleased(0, 38) then
-                    openUI()
-                end
-            end
-        end
+  if data.type == 'requestParts' then
+    requestAndSendParts()
+    cb({ ok = true })
+    return
+  end
 
-        -- Lifts
-        for i, lift in ipairs(Config.Lifts) do
-            local distLift = #(coords - lift.coords)
-            if distLift < 15.0 then
-                sleep = 0
-                drawMarkerAt(lift.marker, lift.coords)
-                if distLift < 2.0 then
-                    ESX.ShowHelpNotification(Config.Text.press_e_lift)
-                    if IsControlJustReleased(0, 38) then
-                        currentLift = i
-                        local veh = getClosestVehicle(lift.coords, 3.0)
-                        if veh ~= 0 then
-                            local pos = GetEntityCoords(veh)
-                            SetEntityCoords(veh, pos.x, pos.y, pos.z + lift.liftHeight, false, false, false, true)
-                            FreezeEntityPosition(veh, true)
-                            notify('Vehicle raised on ' .. (lift.name or 'Lift'))
-                        else
-                            notify(Config.Text.no_vehicle)
-                        end
-                    end
-                end
-            end
-        end
+  if data.type == 'buyPart' then
+    local part = tostring(data.part or '')
+    local quantity = tonumber(data.quantity or 1) or 1
+    if not part or part == '' then cb({ ok = false, error = 'invalid_part' }) return end
+    TriggerServerEvent('advanced_mechanic:buyPart', part, quantity)
+    SetTimeout(300, requestAndSendParts)
+    cb({ ok = true })
+    return
+  end
 
-        Wait(sleep)
+  if data.type == 'repair' then
+    if not data.repairType or not Config.Repairs[data.repairType] then
+      cb({ ok = false, error = 'invalid_repair' })
+      return
     end
+
+    local repair = Config.Repairs[data.repairType]
+    if not ESX or not ESX.TriggerServerCallback then
+      cb({ ok = false, error = 'esx_missing' })
+      return
+    end
+
+    ESX.TriggerServerCallback('advanced_mechanic:hasRequiredParts', function(hasParts)
+      if not hasParts then
+        sendNotification('You do not have the required parts.', Config.Notification.error)
+        cb({ ok = false, error = 'missing_parts' })
+        return
+      end
+
+      -- start progress feedback
+      SendNUIMessage({ action = 'showProgress', label = repair.label, duration = repair.time })
+
+      local vehicleData = getVehicleData()
+      if not vehicleData.hasVehicle then
+        sendNotification('No vehicle found nearby.', Config.Notification.error)
+        SendNUIMessage({ action = 'hideProgress' })
+        cb({ ok = false, error = 'no_vehicle' })
+        return
+      end
+
+      local ped = PlayerPedId()
+      TaskTurnPedToFaceEntity(ped, ped, 500)
+
+      SetTimeout(repair.time, function()
+        -- consume parts and apply repair results on server
+        TriggerServerEvent('advanced_mechanic:consumeParts', data.repairType)
+
+        local vehicle = GetVehiclePedIsIn(ped, false)
+        if vehicle == 0 then vehicle = GetVehiclePedIsIn(ped, true) end
+        if vehicle ~= 0 then
+          SetVehicleFixed(vehicle)
+          SetVehicleDirtLevel(vehicle, 0.0)
+          SetVehicleEngineHealth(vehicle, 1000.0)
+          SetVehicleBodyHealth(vehicle, 1000.0)
+        end
+
+        SendNUIMessage({ action = 'hideProgress' })
+        sendNotification(('Repair complete: %s'):format(repair.label), Config.Notification.success)
+        SendNUIMessage({ action = 'updateVehicleData', data = getVehicleData() })
+        requestAndSendParts()
+      end)
+
+      cb({ ok = true })
+    end, Config.Repairs[data.repairType].parts)
+
+    return
+  end
+
+  cb({ ok = false, error = 'unknown_action' })
 end)
 
--- Keybind to lower vehicle if frozen on a lift
-RegisterKeyMapping('lowerlift', 'Lower vehicle on lift', 'keyboard', 'L')
-RegisterCommand('lowerlift', function()
-    if not currentLift then return end
-    local lift = Config.Lifts[currentLift]
-    local veh = getClosestVehicle(lift.coords, 3.0)
-    if veh ~= 0 then
-        FreezeEntityPosition(veh, false)
-        local pos = GetEntityCoords(veh)
-        SetEntityCoords(veh, pos.x, pos.y, pos.z - (lift.liftHeight or 1.5), false, false, false, true)
-        notify('Vehicle lowered from ' .. (lift.name or 'Lift'))
-    end
+-- Server -> Client updates
+RegisterNetEvent('advanced_mechanic:notify', function(message, type)
+  sendNotification(message, type)
 end)
 
--- Open UI with E near shop even without command
-CreateThread(function()
-    while true do
-        if uiOpen then
-            DisableControlAction(0, 1, true)
-            DisableControlAction(0, 2, true)
-            DisableControlAction(0, 200, true)
-            DisableControlAction(0, 322, true)
-        end
-        Wait(0)
-    end
+RegisterNetEvent('advanced_mechanic:partsUpdated', function(parts)
+  SendNUIMessage({ action = 'updatePartsInventory', parts = parts or {} })
 end)

@@ -1,158 +1,116 @@
-local ESX = exports['es_extended']:getSharedObject()
-local Utils = require 'shared/utils'
+local okUtils, Utils = pcall(require, 'shared.utils')
+if not okUtils then Utils = _G.AM_Utils or {} end
 
--- Helpers
-local function getPlayer(source)
-    return ESX.GetPlayerFromId(source)
-end
-
-local function notify(src, msg)
-    if Config.NotificationType == 'esx' then
-        TriggerClientEvent('esx:showNotification', src, msg)
-    else
-        TriggerClientEvent('chat:addMessage', src, { args = { '[Mechanic]', msg } })
+local ESX
+CreateThread(function()
+  if GetResourceState('es_extended') == 'started' then
+    if exports and exports['es_extended'] and exports['es_extended'].getSharedObject then
+      ESX = exports['es_extended']:getSharedObject()
     end
-end
-
-local function hasRequiredParts(xPlayer, repairKey)
-    local data = Config.Repairs[repairKey]
-    if not data then return false, {} end
-    local missing = {}
-    for itemName, qty in pairs(data.parts or {}) do
-        local item = xPlayer.getInventoryItem(itemName)
-        if not item or (item.count or 0) < qty then
-            table.insert(missing, (Config.Parts[itemName] and Config.Parts[itemName].label) or itemName)
-        end
-    end
-    return #missing == 0, missing
-end
-
--- Callbacks
-ESX.RegisterServerCallback('mechanic:getPartsInventory', function(source, cb)
-    local xPlayer = getPlayer(source)
-    if not xPlayer then cb({}); return end
-    local parts = {}
-    for itemName, partData in pairs(Config.Parts) do
-        local invItem = xPlayer.getInventoryItem(itemName)
-        parts[#parts+1] = {
-            name = itemName,
-            label = partData.label,
-            count = invItem and invItem.count or 0,
-            price = partData.price
-        }
-    end
-    cb(parts)
+  end
+  if not ESX then
+    TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+  end
 end)
 
-ESX.RegisterServerCallback('mechanic:hasRequiredParts', function(source, cb, repairKey)
-    local xPlayer = getPlayer(source)
-    if not xPlayer then cb(false, {}); return end
-    local hasParts, missing = hasRequiredParts(xPlayer, repairKey)
-    cb(hasParts, missing)
+local function getXPlayer(sourceId)
+  if ESX and ESX.GetPlayerFromId then
+    return ESX.GetPlayerFromId(sourceId)
+  end
+  return nil
+end
+
+local function getPlayerParts(xPlayer)
+  local parts = {}
+  for partName, _ in pairs(Config.Parts) do
+    local count = 0
+    if xPlayer and xPlayer.getInventoryItem then
+      local item = xPlayer.getInventoryItem(partName)
+      if item and item.count then count = item.count end
+    end
+    parts[partName] = count
+  end
+  return parts
+end
+
+local function hasRequiredParts(xPlayer, required)
+  if type(required) ~= 'table' then return true end
+  for partName, amount in pairs(required) do
+    if amount > 0 then
+      local have = 0
+      if xPlayer and xPlayer.getInventoryItem then
+        local item = xPlayer.getInventoryItem(partName)
+        have = (item and item.count) or 0
+      end
+      if have < amount then return false end
+    end
+  end
+  return true
+end
+
+-- Defer callback registration until ESX is available
+CreateThread(function()
+  while ESX == nil or ESX.RegisterServerCallback == nil do Wait(50) end
+
+  ESX.RegisterServerCallback('advanced_mechanic:getParts', function(source, cb)
+    local xPlayer = getXPlayer(source)
+    cb(getPlayerParts(xPlayer))
+  end)
+
+  ESX.RegisterServerCallback('advanced_mechanic:hasRequiredParts', function(source, cb, required)
+    local xPlayer = getXPlayer(source)
+    cb(hasRequiredParts(xPlayer, required))
+  end)
 end)
 
 -- Events
-RegisterNetEvent('mechanic:buyPart', function(itemName, quantity)
-    local src = source
-    local xPlayer = getPlayer(src)
-    if not xPlayer then return end
+RegisterNetEvent('advanced_mechanic:buyPart', function(partName, quantity)
+  local src = source
+  local xPlayer = getXPlayer(src)
 
-    local qty = tonumber(quantity) or 1
-    if qty < 1 then qty = 1 end
+  partName = tostring(partName or '')
+  quantity = tonumber(quantity or 1) or 1
 
-    local part = Config.Parts[itemName]
-    if not part then
-        notify(src, 'Invalid part')
-        return
+  if not Config.Parts[partName] or quantity <= 0 then
+    TriggerClientEvent('advanced_mechanic:notify', src, 'Invalid part selection.', Config.Notification.error)
+    return
+  end
+
+  local unitPrice = Config.Parts[partName].price or 0
+  local total = unitPrice * quantity
+
+  if xPlayer and xPlayer.getMoney and xPlayer.removeMoney and xPlayer.addInventoryItem then
+    if xPlayer.getMoney() < total then
+      TriggerClientEvent('advanced_mechanic:notify', src, 'Not enough cash.', Config.Notification.error)
+      return
     end
 
-    local price = part.price * qty
-    if xPlayer.getMoney() >= price then
-        xPlayer.removeMoney(price)
-        xPlayer.addInventoryItem(itemName, qty)
-        notify(src, ('Purchased %sx %s for $%s'):format(qty, part.label, Utils.formatCurrency(price)))
-    else
-        notify(src, 'Not enough money')
-    end
+    xPlayer.removeMoney(total)
+    xPlayer.addInventoryItem(partName, quantity)
+
+    local msg = ('Purchased %dx %s for %s'):format(quantity, Config.Parts[partName].label or partName, Utils.formatCurrency(total))
+    TriggerClientEvent('advanced_mechanic:notify', src, msg, Config.Notification.success)
+    TriggerClientEvent('advanced_mechanic:partsUpdated', src, getPlayerParts(xPlayer))
+  else
+    -- Fallback (no ESX inventory), simply notify
+    TriggerClientEvent('advanced_mechanic:notify', src, 'Purchase simulated (ESX not available).', Config.Notification.info)
+  end
 end)
 
-RegisterNetEvent('mechanic:consumeParts', function(parts)
-    local src = source
-    local xPlayer = getPlayer(src)
-    if not xPlayer then return end
+RegisterNetEvent('advanced_mechanic:consumeParts', function(repairType)
+  local src = source
+  local xPlayer = getXPlayer(src)
 
-    for itemName, qty in pairs(parts or {}) do
-        if qty > 0 then
-            xPlayer.removeInventoryItem(itemName, qty)
-        end
+  local repair = Config.Repairs[repairType]
+  if not repair then return end
+
+  if xPlayer and xPlayer.removeInventoryItem then
+    for partName, amount in pairs(repair.parts or {}) do
+      if amount > 0 then
+        xPlayer.removeInventoryItem(partName, amount)
+      end
     end
+  end
+
+  TriggerClientEvent('advanced_mechanic:partsUpdated', src, getPlayerParts(xPlayer))
 end)
-
--- Admin utilities
-RegisterCommand('addpart', function(source, args)
-    local src = source
-    if src == 0 then return end
-    local xPlayer = getPlayer(src)
-    if not xPlayer then return end
-
-    local item, qty = tostring(args[1] or ''), tonumber(args[2] or '1')
-    if not Config.Parts[item] then notify(src, 'Invalid part name'); return end
-    if qty < 1 then qty = 1 end
-
-    xPlayer.addInventoryItem(item, qty)
-    notify(src, ('Given %sx %s'):format(qty, Config.Parts[item].label))
-end, true)
-
-RegisterCommand('removepart', function(source, args)
-    local src = source
-    if src == 0 then return end
-    local xPlayer = getPlayer(src)
-    if not xPlayer then return end
-
-    local item, qty = tostring(args[1] or ''), tonumber(args[2] or '1')
-    if not Config.Parts[item] then notify(src, 'Invalid part name'); return end
-    if qty < 1 then qty = 1 end
-
-    xPlayer.removeInventoryItem(item, qty)
-    notify(src, ('Removed %sx %s'):format(qty, Config.Parts[item].label))
-end, true)
-
-RegisterCommand('setmechanic', function(source, args)
-    local src = source
-    local targetId = tonumber(args[1] or '')
-    local grade = tonumber(args[2] or Config.RequiredJobGrade)
-
-    if not targetId then
-        notify(src, 'Usage: /setmechanic [id] [grade]')
-        return
-    end
-
-    local xTarget = getPlayer(targetId)
-    if not xTarget then
-        notify(src, 'Player not online')
-        return
-    end
-
-    xTarget.setJob(Config.MechanicJobName, grade)
-    notify(src, ('Set %s as mechanic (grade %s)'):format(xTarget.getName(), grade))
-    notify(targetId, 'You are now a mechanic!')
-end, true)
-
-RegisterCommand('removemechanic', function(source, args)
-    local src = source
-    local targetId = tonumber(args[1] or '')
-    if not targetId then
-        notify(src, 'Usage: /removemechanic [id]')
-        return
-    end
-
-    local xTarget = getPlayer(targetId)
-    if not xTarget then
-        notify(src, 'Player not online')
-        return
-    end
-
-    xTarget.setJob('unemployed', 0)
-    notify(src, ('Removed mechanic job from %s'):format(xTarget.getName()))
-    notify(targetId, 'You are no longer a mechanic.')
-end, true)

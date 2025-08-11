@@ -1,192 +1,168 @@
 // FiveM Mechanic System - Client-side JavaScript
 
-class MechanicUI {
-  constructor() {
-    this.app = document.getElementById('app');
-    this.progress = document.getElementById('progress');
-    this.progressBar = document.getElementById('progressBar');
-    this.progressLabel = document.getElementById('progressLabel');
+(function() {
+  const resourceName = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'advanced_mechanic';
 
-    this.tabs = Array.from(document.querySelectorAll('.tab'));
-    this.panes = {
-      diagnostics: document.getElementById('tab-diagnostics'),
-      repair: document.getElementById('tab-repair'),
-      parts: document.getElementById('tab-parts'),
-    };
+  const app = document.getElementById('app');
+  const btnClose = document.getElementById('btn-close');
+  const tabs = Array.from(document.querySelectorAll('.tab'));
 
-    this.vehModel = document.getElementById('vehModel');
-    this.vehPlate = document.getElementById('vehPlate');
-    this.vehClass = document.getElementById('vehClass');
-    this.vehHealth = document.getElementById('vehHealth');
-    this.vehHealthBar = document.getElementById('vehHealthBar');
+  const vehModel = document.getElementById('veh-model');
+  const vehPlate = document.getElementById('veh-plate');
+  const vehHealthBar = document.getElementById('veh-health-bar');
+  const vehHealthLabel = document.getElementById('veh-health-label');
+  const btnRefresh = document.getElementById('btn-refresh');
 
-    this.repairOptions = document.getElementById('repairOptions');
-    this.partsInventory = document.getElementById('partsInventory');
-    this.partsShop = document.getElementById('partsShop');
+  const repairList = document.getElementById('repair-list');
+  const partsList = document.getElementById('parts-list');
+  const shopList = document.getElementById('shop-list');
 
-    document.getElementById('closeBtn').addEventListener('click', () => this.hide());
-    this.tabs.forEach(btn => btn.addEventListener('click', () => this.switchTab(btn.dataset.tab)));
+  const progressOverlay = document.getElementById('progress');
+  const progressLabel = document.getElementById('progress-label');
+  const progressBar = document.getElementById('progress-bar');
 
-    window.addEventListener('message', (event) => this.onMessage(event.data));
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.hide();
-    });
-
-    // Request parts on load
-    setTimeout(() => this.requestParts(), 50);
+  function post(action, payload) {
+    fetch(`https://${resourceName}/nui:action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(Object.assign({ type: action }, payload || {})),
+    }).catch(() => {});
   }
 
-  show(payload) {
-    this.app.classList.remove('hidden');
-    this.switchTab('diagnostics');
-    if (payload && payload.vehicle) this.updateVehicle(payload.vehicle);
+  function show() { app.classList.remove('hidden'); }
+  function hide() { app.classList.add('hidden'); }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
   }
 
-  hide() {
-    this.app.classList.add('hidden');
-    fetch(`https://${GetParentResourceName()}/close`, { method: 'POST', body: '{}' });
-  }
-
-  switchTab(name) {
-    this.tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    Object.entries(this.panes).forEach(([k, el]) => el.classList.toggle('active', k === name));
-    if (name === 'parts') this.requestParts();
-  }
-
-  onMessage(msg) {
-    switch (msg.action) {
-      case 'show': this.show(msg.data || {}); break;
-      case 'hide': this.app.classList.add('hidden'); break;
-      case 'updateVehicleData': this.updateVehicle(msg.data || {}); break;
-      case 'updatePartsInventory': this.renderParts(msg.data || []); break;
-      case 'showProgress': this.showProgress(msg.data); break;
-      case 'hideProgress': this.hideProgress(); break;
-      case 'notification': console.log('Notification:', msg.data); break;
+  function updateVehicleData(data) {
+    if (!data || !data.hasVehicle) {
+      vehModel.textContent = 'No vehicle';
+      vehPlate.textContent = '-';
+      vehHealthBar.style.width = '0%';
+      vehHealthLabel.textContent = '0%';
+      return;
     }
+    vehModel.textContent = data.model || '-';
+    vehPlate.textContent = data.plate || '-';
+    const hp = Math.max(0, Math.min(100, Math.round((data.healthPercent || 0) * 10) / 10));
+    vehHealthBar.style.width = `${hp}%`;
+    vehHealthLabel.textContent = `${hp}%`;
   }
 
-  updateVehicle(data) {
-    this.vehModel.textContent = data.model || '-';
-    this.vehPlate.textContent = data.plate || '-';
-    this.vehClass.textContent = (data.class ?? '-') + '';
-    const health = Math.max(0, Math.min(100, Number(data.health || 0)));
-    this.vehHealth.textContent = `${health}%`;
-    this.vehHealthBar.style.width = `${health}%`;
-
-    this.renderRepairs();
-  }
-
-  renderRepairs() {
-    const repairs = [
-      { key: 'quick', label: 'Quick Fix' },
-      { key: 'tyres', label: 'Tyre Replacement' },
-      { key: 'brakes', label: 'Brake Service' },
-      { key: 'body', label: 'Body Repair' },
-      { key: 'engine', label: 'Engine Overhaul' },
-    ];
-
-    this.repairOptions.innerHTML = '';
-    repairs.forEach(r => {
+  function buildRepairList(repairs) {
+    repairList.innerHTML = '';
+    Object.entries(repairs || {}).forEach(([key, r]) => {
       const el = document.createElement('div');
-      el.className = 'item';
+      el.className = 'list-item';
       el.innerHTML = `
-        <div>
-          <div class="title">${r.label}</div>
-          <div class="muted">${r.key}</div>
-        </div>
-        <div class="actions">
-          <button class="btn success">Repair</button>
-        </div>
+        <div><div class="value">${r.label || key}</div><div class="muted">Time: ${(r.time/1000).toFixed(0)}s</div></div>
+        <div class="badge">Cost: $${r.cost || 0}</div>
+        <button class="btn" data-repair="${key}">Repair</button>
       `;
-      el.querySelector('button').addEventListener('click', () => this.performRepair(r.key));
-      this.repairOptions.appendChild(el);
+      el.querySelector('button').addEventListener('click', () => post('repair', { repairType: key }));
+      repairList.appendChild(el);
     });
   }
 
-  renderParts(parts) {
-    // Inventory
-    this.partsInventory.innerHTML = '';
-    parts.forEach(p => {
+  function buildPartsInventory(parts) {
+    partsList.innerHTML = '';
+    Object.entries(parts || {}).forEach(([name, count]) => {
       const el = document.createElement('div');
-      el.className = 'item';
+      el.className = 'list-item';
       el.innerHTML = `
-        <div>
-          <div class="title">${p.label}</div>
-          <div class="muted">You have: ${p.count}</div>
-        </div>
-        <div class="actions"></div>
+        <div><div class="value">${name}</div><div class="muted">Owned</div></div>
+        <div class="badge">x${count}</div>
+        <div></div>
       `;
-      this.partsInventory.appendChild(el);
+      partsList.appendChild(el);
     });
+  }
 
-    // Shop
-    this.partsShop.innerHTML = '';
-    parts.forEach(p => {
+  // The shop list is built from the same parts set (labels/prices come from server-side config; we mirror keys client-side for now)
+  function buildShop(partsCatalog) {
+    shopList.innerHTML = '';
+    const entries = Object.entries(partsCatalog || {});
+    entries.forEach(([name, data]) => {
       const el = document.createElement('div');
-      el.className = 'item';
+      el.className = 'list-item';
       el.innerHTML = `
-        <div>
-          <div class="title">${p.label}</div>
-          <div class="muted">$${p.price}</div>
-        </div>
-        <div class="actions">
-          <input type="number" min="1" value="1" style="width:60px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:white;border-radius:6px;padding:6px;" />
-          <button class="btn primary">Buy</button>
-        </div>
+        <div><div class="value">${data.label || name}</div><div class="muted">${name}</div></div>
+        <div class="badge">$${data.price || 0}</div>
+        <button class="btn" data-buy="${name}">Buy</button>
       `;
-      const qty = el.querySelector('input');
-      el.querySelector('button').addEventListener('click', () => this.buyPart(p.name, Number(qty.value || 1)));
-      this.partsShop.appendChild(el);
+      el.querySelector('button').addEventListener('click', () => post('buyPart', { part: name, quantity: 1 }));
+      shopList.appendChild(el);
     });
   }
 
-  requestParts() {
-    fetch(`https://${GetParentResourceName()}/requestPartsInventory`, { method: 'POST', body: '{}' });
+  function showProgress(label, duration) {
+    progressLabel.textContent = label || 'Working...';
+    progressBar.style.width = '0%';
+    progressOverlay.classList.remove('hidden');
+
+    let start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const pct = Math.max(0, Math.min(100, Math.floor((elapsed / duration) * 100)));
+      progressBar.style.width = `${pct}%`;
+      if (elapsed < duration) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
-  buyPart(name, quantity) {
-    fetch(`https://${GetParentResourceName()}/buyPart`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ part: name, quantity })
-    });
-    // update inventory shortly after
-    setTimeout(() => this.requestParts(), 300);
+  function hideProgress() {
+    progressOverlay.classList.add('hidden');
   }
 
-  performRepair(key) {
-    fetch(`https://${GetParentResourceName()}/performRepair`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repair: key })
-    });
+  function notify(message, type) {
+    toast.textContent = message || '';
+    toast.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add('hidden'), 2500);
   }
 
-  showProgress(data) {
-    const duration = Number(data?.duration || 0);
-    const label = data?.label || 'Working...';
-    this.progressLabel.textContent = label;
-    this.progressBar.style.width = '0%';
-    this.progress.classList.remove('hidden');
+  // Events
+  btnClose.addEventListener('click', () => post('close'));
+  btnRefresh.addEventListener('click', () => post('requestVehicleData'));
+  tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
 
-    if (this._timer) clearInterval(this._timer);
-    const start = performance.now();
-    this._timer = setInterval(() => {
-      const elapsed = performance.now() - start;
-      const pct = Math.min(100, Math.floor((elapsed / duration) * 100));
-      this.progressBar.style.width = pct + '%';
-      if (pct >= 100) {
-        clearInterval(this._timer);
-        this.hideProgress();
-      }
-    }, 50);
-  }
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.action === 'show') { show(); post('requestVehicleData'); post('requestParts'); return; }
+    if (data.action === 'hide') { hide(); return; }
+    if (data.action === 'updateVehicleData') { updateVehicleData(data.data); return; }
+    if (data.action === 'updatePartsInventory') { buildPartsInventory(data.parts); return; }
+    if (data.action === 'showProgress') { showProgress(data.label, data.duration); return; }
+    if (data.action === 'hideProgress') { hideProgress(); return; }
+    if (data.action === 'notification') { notify(data.message, data.type); return; }
+  });
 
-  hideProgress() {
-    if (this._timer) clearInterval(this._timer);
-    this.progress.classList.add('hidden');
-  }
-}
+  // Build constant lists from server-defined config, mirrored here at runtime via initial message (optional)
+  // For simplicity, we inline a minimal client-side mirror. Server should ideally send these.
+  const defaultRepairs = {
+    quick: { label: 'Quick Repair', time: 5000, cost: 500 },
+    engine: { label: 'Engine Overhaul', time: 15000, cost: 3000 },
+    body: { label: 'Body Repair', time: 12000, cost: 1200 },
+  };
 
-const ui = new MechanicUI();
+  const defaultPartsCatalog = {
+    engine_oil: { label: 'Engine Oil', price: 100 },
+    spark_plug: { label: 'Spark Plug', price: 50 },
+    repair_kit: { label: 'Repair Kit', price: 500 },
+    metal_sheet: { label: 'Metal Sheet', price: 200 },
+  };
+
+  buildRepairList(defaultRepairs);
+  buildShop(defaultPartsCatalog);
+
+  // ESC closes
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') post('close');
+  });
+})();

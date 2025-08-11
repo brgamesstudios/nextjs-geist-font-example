@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mechanic</title>
   <link rel="stylesheet" href="style.css" />
@@ -10,10 +11,10 @@
   <div id="app" class="container hidden">
     <header class="header">
       <div class="brand">
-        <img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'" />
-        <h1>Mechanic</h1>
+        <div class="logo">🔧</div>
+        <div class="title">Mechanic</div>
       </div>
-      <button id="closeBtn" class="close">×</button>
+      <button id="btn-close" class="btn btn-ghost">×</button>
     </header>
 
     <nav class="tabs">
@@ -22,48 +23,62 @@
       <button class="tab" data-tab="parts">Parts</button>
     </nav>
 
-    <section class="content">
-      <div id="tab-diagnostics" class="tab-pane active">
-        <div class="card">
-          <h2>Vehicle</h2>
-          <div class="info-grid">
-            <div><span>Model:</span> <strong id="vehModel">-</strong></div>
-            <div><span>Plate:</span> <strong id="vehPlate">-</strong></div>
-            <div><span>Class:</span> <strong id="vehClass">-</strong></div>
+    <section id="tab-diagnostics" class="tab-content active">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <div class="muted">Vehicle</div>
+            <div id="veh-model" class="value">-</div>
           </div>
-          <div class="meter">
-            <div class="meter-bar" id="vehHealthBar" style="width: 0%"></div>
+          <div>
+            <div class="muted">Plate</div>
+            <div id="veh-plate" class="value">-</div>
           </div>
-          <div class="meter-label">Health: <span id="vehHealth">0%</span></div>
+        </div>
+        <div class="row">
+          <div class="muted">Health</div>
+          <div class="progress">
+            <div id="veh-health-bar" class="progress-bar" style="width: 0%"></div>
+          </div>
+          <div id="veh-health-label" class="value">0%</div>
+        </div>
+        <div class="row right">
+          <button id="btn-refresh" class="btn">Refresh</button>
         </div>
       </div>
+    </section>
 
-      <div id="tab-repair" class="tab-pane">
-        <div class="card">
-          <h2>Repair Options</h2>
-          <div id="repairOptions" class="list"></div>
+    <section id="tab-repair" class="tab-content">
+      <div class="card">
+        <div class="list" id="repair-list">
+          <!-- Repairs populated by JS -->
         </div>
       </div>
+    </section>
 
-      <div id="tab-parts" class="tab-pane">
-        <div class="card">
-          <h2>Parts Inventory</h2>
-          <div id="partsInventory" class="list"></div>
+    <section id="tab-parts" class="tab-content">
+      <div class="card">
+        <div class="list" id="parts-list">
+          <!-- Inventory populated by JS -->
         </div>
-        <div class="card">
-          <h2>Parts Shop</h2>
-          <div id="partsShop" class="list"></div>
+        <div class="spacer"></div>
+        <div class="list" id="shop-list">
+          <!-- Shop populated by JS -->
         </div>
       </div>
     </section>
   </div>
 
-  <div id="progress" class="progress hidden">
-    <div class="progress-inner">
-      <div id="progressLabel">Working...</div>
-      <div class="bar"><div id="progressBar"></div></div>
+  <div id="progress" class="progress-overlay hidden">
+    <div class="progress-modal">
+      <div id="progress-label" class="muted">Working...</div>
+      <div class="progress large">
+        <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+      </div>
     </div>
   </div>
+
+  <div id="toast" class="toast hidden"></div>
 
   <script src="script.js"></script>
 </body>
