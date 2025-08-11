@@ -241,3 +241,18 @@ html, body {
 .ring-armor::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 6px solid rgba(96,165,250,0.7); clip-path: conic-gradient(#60a5fa var(--arm,0%), transparent 0); }
 .ring-hunger::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 6px solid rgba(250,204,21,0.7); clip-path: conic-gradient(#facc15 var(--hun,100%), transparent 0); }
 .ring-thirst::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 6px solid rgba(59,130,246,0.7); clip-path: conic-gradient(#3b82f6 var(--thr,100%), transparent 0); }
+
+.mini-rings {
+  position: absolute;
+  left: 1.2vw;
+  bottom: calc(2.4vh + 4px);
+  width: 20.5vw;
+  max-width: 360px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mini-rings .ring { width: 70px; height: 70px; }
+.mini-rings .ring-inner { inset: 8px; }
+.mini-rings .ring-inner span { font-size: 11px; }
+.mini-rings .ring-inner div { font-size: 14px; }
