@@ -11,6 +11,13 @@ Config.ShowCompass = true
 Config.ShowStreetZone = true
 Config.MetricSpeed = false        -- false = mph, true = km/h
 
+-- Minimap
+Config.UseMinimap = true
+Config.CircleMinimap = true
+Config.RadarAlwaysOn = false
+Config.RadarOnFoot = false        -- show radar when on foot
+Config.RadarZoom = 1100
+
 -- Update rates (ms)
 Config.TickMs = 100               -- main HUD update
 Config.StreetRefreshMs = 500

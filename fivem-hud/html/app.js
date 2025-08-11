@@ -13,6 +13,8 @@ const seatbeltEl = document.getElementById('seatbelt');
 const vehicleBlock = document.getElementById('vehicleBlock');
 const stressBar = document.getElementById('stressBar');
 const stressText = document.getElementById('stressText');
+const northIndicator = document.getElementById('northIndicator');
+const minimapFrame = document.getElementById('minimapFrame');
 
 window.addEventListener('message', (e) => {
   const data = e.data || {};
@@ -29,6 +31,7 @@ window.addEventListener('message', (e) => {
     document.getElementById('compass').style.display = data.showCompass ? 'block' : 'none';
     document.getElementById('street').style.display = data.showStreetZone ? 'block' : 'none';
     if (stressBar) stressBar.style.display = data.useStress ? 'block' : 'none';
+    if (minimapFrame) minimapFrame.style.display = (data.useMinimap ? 'block' : 'none');
     return;
   }
   if (data.action === 'street') {
@@ -71,9 +74,12 @@ window.addEventListener('message', (e) => {
     gearEl.textContent = data.gear === 0 ? 'N' : `${data.gear}`;
     rpmEl.textContent = (data.rpm || 0).toFixed(1);
 
-    // Compass
+    // Compass + minimap north
     const heading = data.heading || 0;
     compass.textContent = headingToCardinal(heading);
+    if (northIndicator) {
+      northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+    }
 
     seatbeltEl.classList.toggle('on', !!data.seatbelt);
     return;

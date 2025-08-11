@@ -29,7 +29,8 @@ CreateThread(function()
     showStreetZone = Config.ShowStreetZone,
     useVoice = Config.UseVoice,
     useSeatbelt = Config.UseSeatbelt,
-    useStress = Config.UseStress
+    useStress = Config.UseStress,
+    useMinimap = Config.UseMinimap
   })
 end)
 

@@ -135,3 +135,23 @@ html, body {
 /* Speed coloring */
 .speed.warn #speed { color: var(--warn); }
 .speed.danger #speed { color: var(--danger); }
+
+.minimap-frame {
+  position: absolute;
+  left: 1.2vw;
+  bottom: 2.4vh;
+  width: 20.5vw;
+  height: 20.5vw;
+  max-width: 360px;
+  max-height: 360px;
+  pointer-events: none;
+}
+.minimap-frame .north {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(0deg);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
