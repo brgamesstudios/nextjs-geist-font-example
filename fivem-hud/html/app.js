@@ -87,6 +87,7 @@ window.addEventListener('message', (e) => {
     currentPrefs.useVoice = !!data.useVoice;
     currentPrefs.useStress = !!data.useStress;
     currentPrefs.useMinimap = !!data.useMinimap;
+    currentPrefs.radarOnFoot = !!data.radarOnFoot;
 
     speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
     document.getElementById('voice').style.display = currentPrefs.useVoice ? 'flex' : 'none';
@@ -149,7 +150,7 @@ window.addEventListener('message', (e) => {
     }
     
     // Show/hide minimap when not in vehicle (if configured)
-    if (minimapOverlay && !Config.RadarOnFoot) {
+    if (minimapOverlay && !currentPrefs.radarOnFoot) {
       minimapOverlay.style.display = data.inVehicle ? 'flex' : 'none';
     }
     return;

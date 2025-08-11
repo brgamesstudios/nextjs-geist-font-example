@@ -48,7 +48,8 @@ CreateThread(function()
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,
-    useMinimap = Prefs.UseMinimap
+    useMinimap = Prefs.UseMinimap,
+    radarOnFoot = Config.RadarOnFoot
   })
 end)
 
@@ -363,7 +364,8 @@ RegisterNUICallback('applySettings', function(data, cb)
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,
-    useMinimap = Prefs.UseMinimap
+    useMinimap = Prefs.UseMinimap,
+    radarOnFoot = Config.RadarOnFoot
   })
 
   -- Notify minimap controller
