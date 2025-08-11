@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mechanic UI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="hidden">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Mechanic</h2>
+        <button id="closeBtn" class="btn btn-ghost">×</button>
+      </div>
+
+      <div class="grid">
+        <section>
+          <h3>Quick Actions</h3>
+          <div class="row">
+            <button id="repairBtn" class="btn">Repair</button>
+            <button id="cleanBtn" class="btn">Clean</button>
+            <button id="maxBtn" class="btn">Max Performance</button>
+            <button id="stockBtn" class="btn">Stock</button>
+          </div>
+        </section>
+
+        <section>
+          <h3>Colors</h3>
+          <div class="form">
+            <label>Primary <input id="colorPrimary" type="number" min="0" max="160" /></label>
+            <label>Secondary <input id="colorSecondary" type="number" min="0" max="160" /></label>
+            <label>Pearlescent <input id="colorPearl" type="number" min="0" max="160" /></label>
+            <label>Wheel <input id="colorWheel" type="number" min="0" max="160" /></label>
+            <button id="applyColors" class="btn">Apply Colors</button>
+          </div>
+        </section>
+
+        <section>
+          <h3>Extras</h3>
+          <div id="extrasList" class="list"></div>
+        </section>
+
+        <section>
+          <h3>Mods</h3>
+          <div id="modsList" class="list"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
