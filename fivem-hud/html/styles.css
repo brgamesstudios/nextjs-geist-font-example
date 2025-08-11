@@ -570,7 +570,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(20px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 2000;

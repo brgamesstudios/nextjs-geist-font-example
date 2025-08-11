@@ -68,8 +68,8 @@ const showIndicators = document.getElementById('showIndicators');
 const radarOnFoot = document.getElementById('radarOnFoot');
 
 // Buttons
-const closeSettings = document.getElementById('closeSettings');
-const saveSettings = document.getElementById('saveSettings');
+const closeSettingsBtn = document.getElementById('closeSettings');
+const saveSettingsBtn = document.getElementById('saveSettings');
 
 // Current preferences
 let currentPrefs = {
@@ -89,39 +89,55 @@ let currentPrefs = {
 
 // Initialize HUD
 function initHUD() {
+    // Ensure all elements are loaded
+    if (!hud || !settings) {
+        console.error('HUD elements not found');
+        return;
+    }
+    
     hud.style.display = 'block';
     settings.style.display = 'none';
     updateVisibility();
+    
+    // Add event listeners after DOM is ready
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', closeSettings);
+    }
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+    
+    console.log('HUD initialized successfully');
 }
 
 // Update element visibility based on preferences
 function updateVisibility() {
-    clock.style.display = currentPrefs.showClock ? 'block' : 'none';
-    compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
-    street.style.display = currentPrefs.showStreet ? 'block' : 'none';
-    voice.style.display = currentPrefs.showVoice ? 'block' : 'none';
-    minimapOverlay.style.display = currentPrefs.showMinimap ? 'block' : 'none';
+    if (clock) clock.style.display = currentPrefs.showClock ? 'block' : 'none';
+    if (compass) compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
+    if (street) street.style.display = currentPrefs.showStreet ? 'block' : 'none';
+    if (voice) voice.style.display = currentPrefs.showVoice ? 'block' : 'none';
+    if (minimapOverlay) minimapOverlay.style.display = currentPrefs.showMinimap ? 'block' : 'none';
     
     const miniRings = document.querySelector('.mini-rings');
     const largeRings = document.querySelector('.rings');
-    miniRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
-    largeRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
+    if (miniRings) miniRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
+    if (largeRings) largeRings.style.display = currentPrefs.showRings ? 'flex' : 'none';
     
     if (currentPrefs.showSpeedo) {
-        speedo.style.display = 'block';
-        vehicleStatusBelow.style.display = 'block';
+        if (speedo) speedo.style.display = 'block';
+        if (vehicleStatusBelow) vehicleStatusBelow.style.display = 'block';
     } else {
-        speedo.style.display = 'none';
-        vehicleStatusBelow.style.display = 'none';
+        if (speedo) speedo.style.display = 'none';
+        if (vehicleStatusBelow) vehicleStatusBelow.style.display = 'none';
     }
     
     const fuelIndicator = document.querySelector('.speedo-fuel');
     const engineIndicator = document.querySelector('.speedo-engine');
-    fuelIndicator.style.display = currentPrefs.showFuel ? 'flex' : 'none';
-    engineIndicator.style.display = currentPrefs.showEngine ? 'flex' : 'none';
+    if (fuelIndicator) fuelIndicator.style.display = currentPrefs.showFuel ? 'flex' : 'none';
+    if (engineIndicator) engineIndicator.style.display = currentPrefs.showEngine ? 'flex' : 'none';
     
     if (currentPrefs.showSeatbelt || currentPrefs.showIndicators) {
-        vehicleStatusBelow.style.display = 'flex';
+        if (vehicleStatusBelow) vehicleStatusBelow.style.display = 'flex';
     }
 }
 
@@ -251,42 +267,46 @@ function updateVoice(data) {
 
 // Settings panel functions
 function openSettings() {
-    settings.style.display = 'flex';
-    loadSettingsToUI();
+    if (settings) {
+        settings.style.display = 'flex';
+        loadSettingsToUI();
+    }
 }
 
 function closeSettings() {
-    settings.style.display = 'none';
+    if (settings) {
+        settings.style.display = 'none';
+    }
 }
 
 function loadSettingsToUI() {
-    showClock.checked = currentPrefs.showClock;
-    showCompass.checked = currentPrefs.showCompass;
-    showStreet.checked = currentPrefs.showStreet;
-    showVoice.checked = currentPrefs.showVoice;
-    showMinimap.checked = currentPrefs.showMinimap;
-    showRings.checked = currentPrefs.showRings;
-    showSpeedo.checked = currentPrefs.showSpeedo;
-    showFuel.checked = currentPrefs.showFuel;
-    showEngine.checked = currentPrefs.showEngine;
-    showSeatbelt.checked = currentPrefs.showSeatbelt;
-    showIndicators.checked = currentPrefs.showIndicators;
-    radarOnFoot.checked = currentPrefs.radarOnFoot;
+    if (showClock) showClock.checked = currentPrefs.showClock;
+    if (showCompass) showCompass.checked = currentPrefs.showCompass;
+    if (showStreet) showStreet.checked = currentPrefs.showStreet;
+    if (showVoice) showVoice.checked = currentPrefs.showVoice;
+    if (showMinimap) showMinimap.checked = currentPrefs.showMinimap;
+    if (showRings) showRings.checked = currentPrefs.showRings;
+    if (showSpeedo) showSpeedo.checked = currentPrefs.showSpeedo;
+    if (showFuel) showFuel.checked = currentPrefs.showFuel;
+    if (showEngine) showEngine.checked = currentPrefs.showEngine;
+    if (showSeatbelt) showSeatbelt.checked = currentPrefs.showSeatbelt;
+    if (showIndicators) showIndicators.checked = currentPrefs.showIndicators;
+    if (radarOnFoot) radarOnFoot.checked = currentPrefs.radarOnFoot;
 }
 
 function saveSettings() {
-    currentPrefs.showClock = showClock.checked;
-    currentPrefs.showCompass = showCompass.checked;
-    currentPrefs.showStreet = showStreet.checked;
-    currentPrefs.showVoice = showVoice.checked;
-    currentPrefs.showMinimap = showMinimap.checked;
-    currentPrefs.showRings = showRings.checked;
-    currentPrefs.showSpeedo = showSpeedo.checked;
-    currentPrefs.showFuel = showFuel.checked;
-    currentPrefs.showEngine = showEngine.checked;
-    currentPrefs.showSeatbelt = showSeatbelt.checked;
-    currentPrefs.showIndicators = showIndicators.checked;
-    currentPrefs.radarOnFoot = radarOnFoot.checked;
+    if (showClock) currentPrefs.showClock = showClock.checked;
+    if (showCompass) currentPrefs.showCompass = showCompass.checked;
+    if (showStreet) currentPrefs.showStreet = showStreet.checked;
+    if (showVoice) currentPrefs.showVoice = showVoice.checked;
+    if (showMinimap) currentPrefs.showMinimap = showMinimap.checked;
+    if (showRings) currentPrefs.showRings = showRings.checked;
+    if (showSpeedo) currentPrefs.showSpeedo = showSpeedo.checked;
+    if (showFuel) currentPrefs.showFuel = showFuel.checked;
+    if (showEngine) currentPrefs.showEngine = showEngine.checked;
+    if (showSeatbelt) currentPrefs.showSeatbelt = showSeatbelt.checked;
+    if (showIndicators) currentPrefs.showIndicators = showIndicators.checked;
+    if (radarOnFoot) currentPrefs.radarOnFoot = radarOnFoot.checked;
     
     updateVisibility();
     closeSettings();
@@ -301,9 +321,7 @@ function saveSettings() {
     });
 }
 
-// Event listeners
-document.getElementById('closeSettings').addEventListener('click', closeSettings);
-document.getElementById('saveSettings').addEventListener('click', saveSettings);
+
 
 // NUI message handler
 window.addEventListener('message', (e) => {
