@@ -1,49 +1,81 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mechanic UI</title>
+  <title>Mekanik</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="app" class="hidden">
     <div class="panel">
       <div class="panel-header">
-        <h2>Mechanic</h2>
+        <h2>Mekanik Arayüz</h2>
         <button id="closeBtn" class="btn btn-ghost">×</button>
       </div>
 
-      <div class="grid">
-        <section>
-          <h3>Quick Actions</h3>
+      <div class="tabs">
+        <button class="tab active" data-tab="quick">Hızlı İşlemler</button>
+        <button class="tab" data-tab="colors">Renkler</button>
+        <button class="tab" data-tab="extras">Extras</button>
+        <button class="tab" data-tab="mods">Modlar</button>
+        <button class="tab" data-tab="vehicle">Araç</button>
+      </div>
+
+      <div class="tab-content">
+        <section data-content="quick" class="content active">
           <div class="row">
-            <button id="repairBtn" class="btn">Repair</button>
-            <button id="cleanBtn" class="btn">Clean</button>
-            <button id="maxBtn" class="btn">Max Performance</button>
-            <button id="stockBtn" class="btn">Stock</button>
+            <button id="repairBtn" class="btn">Tamir Et</button>
+            <button id="cleanBtn" class="btn">Temizle</button>
+            <button id="maxBtn" class="btn">Maks Performans</button>
+            <button id="stockBtn" class="btn">Stok</button>
+          </div>
+          <div class="row mt">
+            <label class="inline">
+              <input id="turboToggle" type="checkbox" /> Turbo
+            </label>
           </div>
         </section>
 
-        <section>
-          <h3>Colors</h3>
+        <section data-content="colors" class="content">
           <div class="form">
-            <label>Primary <input id="colorPrimary" type="number" min="0" max="160" /></label>
-            <label>Secondary <input id="colorSecondary" type="number" min="0" max="160" /></label>
-            <label>Pearlescent <input id="colorPearl" type="number" min="0" max="160" /></label>
-            <label>Wheel <input id="colorWheel" type="number" min="0" max="160" /></label>
-            <button id="applyColors" class="btn">Apply Colors</button>
+            <label>Birincil (0-160)
+              <input id="colorPrimary" type="number" min="0" max="160" />
+            </label>
+            <label>İkincil (0-160)
+              <input id="colorSecondary" type="number" min="0" max="160" />
+            </label>
+            <label>Pearlescent (0-160)
+              <input id="colorPearl" type="number" min="0" max="160" />
+            </label>
+            <label>Jant Rengi (0-160)
+              <input id="colorWheel" type="number" min="0" max="160" />
+            </label>
+            <button id="applyColors" class="btn">Uygula</button>
           </div>
         </section>
 
-        <section>
-          <h3>Extras</h3>
+        <section data-content="extras" class="content">
           <div id="extrasList" class="list"></div>
         </section>
 
-        <section>
-          <h3>Mods</h3>
+        <section data-content="mods" class="content">
           <div id="modsList" class="list"></div>
+        </section>
+
+        <section data-content="vehicle" class="content">
+          <div class="form form-1">
+            <label>Jant Tipi
+              <select id="wheelTypeSelect"></select>
+            </label>
+            <label>Livery
+              <select id="liverySelect"></select>
+            </label>
+            <label>Plaka
+              <input id="plateInput" type="text" maxlength="8" placeholder="PLAKA" />
+            </label>
+            <button id="applyPlate" class="btn">Plakayı Uygula</button>
+          </div>
         </section>
       </div>
     </div>

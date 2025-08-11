@@ -106,6 +106,34 @@ local function collectVehicleData(vehicle)
     -- Turbo toggle
     data.turbo = IsToggleModOn(vehicle, 18)
 
+    -- Wheel type
+    if GetVehicleWheelType then
+        data.wheelType = GetVehicleWheelType(vehicle)
+    end
+
+    -- Livery info (native or mod 48 fallback)
+    local liveryCount = 0
+    local liveryCurrent = -1
+    if GetVehicleLiveryCount and GetVehicleLivery then
+        liveryCount = GetVehicleLiveryCount(vehicle) or 0
+        if liveryCount > 0 then
+            liveryCurrent = GetVehicleLivery(vehicle)
+        end
+    end
+    if liveryCount == 0 then
+        local modCount = GetNumVehicleMods(vehicle, 48) or 0
+        if modCount > 0 then
+            liveryCount = modCount
+            liveryCurrent = GetVehicleMod(vehicle, 48)
+        end
+    end
+    data.livery = { count = liveryCount, current = liveryCurrent }
+
+    -- Plate
+    if GetVehicleNumberPlateText then
+        data.plate = GetVehicleNumberPlateText(vehicle)
+    end
+
     return data
 end
 
@@ -270,6 +298,66 @@ RegisterNUICallback('toggleExtra', function(body, cb)
     end
 
     cb({ ok = true })
+end)
+
+RegisterNUICallback('setTurbo', function(body, cb)
+    local vehicle = cachedVehicle ~= 0 and cachedVehicle or getTargetVehicle()
+    if vehicle == 0 then cb({ ok = false }) return end
+    local enable = body and body.enable == true
+    if requestControlOfEntity(vehicle) then
+        ToggleVehicleMod(vehicle, 18, enable)
+    end
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('setWheelType', function(body, cb)
+    local vehicle = cachedVehicle ~= 0 and cachedVehicle or getTargetVehicle()
+    if vehicle == 0 then cb({ ok = false }) return end
+    local wheelType = tonumber(body and body.wheelType)
+    if wheelType == nil then cb({ ok = false }) return end
+    if requestControlOfEntity(vehicle) and SetVehicleWheelType then
+        SetVehicleWheelType(vehicle, wheelType)
+        -- keep current mod index when possible
+        SetVehicleModKit(vehicle, 0)
+        local frontWheels = 23
+        local current = GetVehicleMod(vehicle, frontWheels)
+        if current and current >= 0 then
+            SetVehicleMod(vehicle, frontWheels, current, false)
+        end
+    end
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('setLivery', function(body, cb)
+    local vehicle = cachedVehicle ~= 0 and cachedVehicle or getTargetVehicle()
+    if vehicle == 0 then cb({ ok = false }) return end
+    local index = tonumber(body and body.index)
+    if index == nil then cb({ ok = false }) return end
+    if requestControlOfEntity(vehicle) then
+        local count = (GetVehicleLiveryCount and GetVehicleLiveryCount(vehicle)) or 0
+        if count and count > 0 and SetVehicleLivery then
+            SetVehicleLivery(vehicle, index)
+        else
+            -- fallback mod 48
+            SetVehicleModKit(vehicle, 0)
+            SetVehicleMod(vehicle, 48, index, false)
+        end
+    end
+    cb({ ok = true })
+end)
+
+RegisterNUICallback('setPlate', function(body, cb)
+    local vehicle = cachedVehicle ~= 0 and cachedVehicle or getTargetVehicle()
+    if vehicle == 0 then cb({ ok = false }) return end
+    local text = tostring(body and body.text or '')
+    -- sanitize: uppercase, trim to 8, remove non-alnum/space
+    text = string.upper(text)
+    text = string.gsub(text, "[^%w ]", "")
+    if string.len(text) > 8 then text = string.sub(text, 1, 8) end
+    if requestControlOfEntity(vehicle) and SetVehicleNumberPlateText then
+        SetVehicleNumberPlateText(vehicle, text)
+    end
+    cb({ ok = true, plate = text })
 end)
 
 RegisterNetEvent('fmu:client:notAllowed', function(reason)
