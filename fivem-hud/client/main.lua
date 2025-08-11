@@ -234,8 +234,8 @@ CreateThread(function()
         local speed = GetEntitySpeed(veh)
         local gear = GetVehicleCurrentGear(veh)
         local rpm = GetVehicleCurrentRpm(veh)
-        local fuel = getVehicleFuelLevel(veh)
-        local engine = getVehicleEngineHealth(veh)
+        local fuel = GetVehicleFuelLevel(veh)
+        local engine = GetVehicleEngineHealth(veh)
         
         -- Convert speed to mph/kmh
         if Config.MetricSpeed then
