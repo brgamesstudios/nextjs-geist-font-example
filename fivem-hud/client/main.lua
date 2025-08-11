@@ -11,6 +11,10 @@ local Prefs = {
   MetricSpeed = Config.MetricSpeed,
   ShowCompass = Config.ShowCompass,
   ShowStreetZone = Config.ShowStreetZone,
+  ShowClock = Config.ShowClock,
+  ShowFuel = Config.ShowFuel,
+  ShowEngine = Config.ShowEngine,
+  ShowIndicators = Config.ShowIndicators,
   UseVoice = Config.UseVoice,
   UseStress = Config.UseStress,
   UseSeatbelt = Config.UseSeatbelt,
@@ -37,6 +41,10 @@ CreateThread(function()
     speedDanger = Config.SpeedDanger,
     showCompass = Prefs.ShowCompass,
     showStreetZone = Prefs.ShowStreetZone,
+    showClock = Prefs.ShowClock,
+    showFuel = Prefs.ShowFuel,
+    showEngine = Prefs.ShowEngine,
+    showIndicators = Prefs.ShowIndicators,
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,
@@ -140,6 +148,21 @@ CreateThread(function()
   end
 end)
 
+local function getVehicleFuelLevel(veh)
+  if QBCore and GetResourceState('qb-fuel') == 'started' then
+    if exports['qb-fuel'] and exports['qb-fuel'].GetFuel then
+      local ok, val = pcall(function() return exports['qb-fuel']:GetFuel(veh) end)
+      if ok and type(val) == 'number' then return val end
+    end
+  end
+  -- fallback to native if present
+  if DoesEntityExist(veh) then
+    local level = GetVehicleFuelLevel(veh)
+    if type(level) == 'number' then return level end
+  end
+  return 0
+end
+
 -- Main HUD tick
 CreateThread(function()
   while true do
@@ -154,6 +177,11 @@ CreateThread(function()
       local speed = 0
       local gear = 0
       local rpm = 0
+      local fuel = 0
+      local engineHealth = 0
+      local indicatorLeft = false
+      local indicatorRight = false
+
       if inVehicle then
         local veh = GetVehiclePedIsIn(ped, false)
         local speedMs = GetEntitySpeed(veh)
@@ -164,9 +192,28 @@ CreateThread(function()
         end
         gear = GetVehicleCurrentGear(veh) or 0
         rpm = GetVehicleCurrentRpm(veh) or 0
+
+        if Prefs.ShowFuel then
+          fuel = math.floor(getVehicleFuelLevel(veh) + 0.5)
+          if fuel < 0 then fuel = 0 elseif fuel > 100 then fuel = 100 end
+        end
+        if Prefs.ShowEngine then
+          engineHealth = math.floor((GetVehicleEngineHealth(veh) or 0) / 10)
+          engineHealth = math.max(0, math.min(1000, engineHealth))
+          engineHealth = math.floor(engineHealth / 10)
+        end
+        if Prefs.ShowIndicators then
+          indicatorLeft = IsVehicleIndicatorLightOn(veh, 1)
+          indicatorRight = IsVehicleIndicatorLightOn(veh, 0)
+        end
       end
 
       local heading = GetEntityHeading(ped)
+      local hour = 0
+      local minute = 0
+      if Prefs.ShowClock then
+        hour, minute = GetClockHours(), GetClockMinutes()
+      end
 
       SendNUIMessage({
         action = 'tick',
@@ -178,7 +225,13 @@ CreateThread(function()
         gear = gear,
         rpm = rpm,
         heading = heading,
-        seatbelt = seatbeltOn
+        seatbelt = seatbeltOn,
+        fuel = fuel,
+        engine = engineHealth,
+        bl = indicatorLeft,
+        br = indicatorRight,
+        hour = hour,
+        minute = minute
       })
     end
     Wait(Config.TickMs or 100)
@@ -214,6 +267,10 @@ RegisterNUICallback('applySettings', function(data, cb)
     speedDanger = Config.SpeedDanger,
     showCompass = Prefs.ShowCompass,
     showStreetZone = Prefs.ShowStreetZone,
+    showClock = Prefs.ShowClock,
+    showFuel = Prefs.ShowFuel,
+    showEngine = Prefs.ShowEngine,
+    showIndicators = Prefs.ShowIndicators,
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,

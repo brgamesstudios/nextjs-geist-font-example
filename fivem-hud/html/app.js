@@ -15,6 +15,11 @@ const stressBar = document.getElementById('stressBar');
 const stressText = document.getElementById('stressText');
 const northIndicator = document.getElementById('northIndicator');
 const minimapFrame = document.getElementById('minimapFrame');
+const clockEl = document.getElementById('clock');
+const fuelEl = document.getElementById('fuel');
+const engineEl = document.getElementById('engine');
+const indLEl = document.getElementById('indL');
+const indREl = document.getElementById('indR');
 
 // Settings elements
 const panel = document.getElementById('settings');
@@ -25,6 +30,10 @@ const optStreet = document.getElementById('optStreet');
 const optVoice = document.getElementById('optVoice');
 const optStress = document.getElementById('optStress');
 const optMinimap = document.getElementById('optMinimap');
+const optClock = document.getElementById('optClock');
+const optFuel = document.getElementById('optFuel');
+const optEngine = document.getElementById('optEngine');
+const optIndicators = document.getElementById('optIndicators');
 const optCircle = document.getElementById('optCircle');
 const optRadarOnFoot = document.getElementById('optRadarOnFoot');
 const btnSave = document.getElementById('btnSave');
@@ -35,6 +44,10 @@ let currentPrefs = {
   metric: false,
   showCompass: true,
   showStreetZone: true,
+  showClock: true,
+  showFuel: true,
+  showEngine: true,
+  showIndicators: true,
   useVoice: true,
   useStress: true,
   useMinimap: true,
@@ -54,16 +67,21 @@ window.addEventListener('message', (e) => {
     currentPrefs.metric = !!data.metric;
     currentPrefs.showCompass = !!data.showCompass;
     currentPrefs.showStreetZone = !!data.showStreetZone;
+    currentPrefs.showClock = !!data.showClock;
+    currentPrefs.showFuel = !!data.showFuel;
+    currentPrefs.showEngine = !!data.showEngine;
+    currentPrefs.showIndicators = !!data.showIndicators;
     currentPrefs.useVoice = !!data.useVoice;
     currentPrefs.useStress = !!data.useStress;
     currentPrefs.useMinimap = !!data.useMinimap;
 
     speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
     document.getElementById('voice').style.display = currentPrefs.useVoice ? 'flex' : 'none';
-    document.getElementById('compass').style.display = currentPrefs.showCompass ? 'block' : 'none';
-    document.getElementById('street').style.display = currentPrefs.showStreetZone ? 'block' : 'none';
+    compass.style.display = currentPrefs.showCompass ? 'block' : 'none';
+    street.style.display = currentPrefs.showStreetZone ? 'block' : 'none';
     if (stressBar) stressBar.style.display = currentPrefs.useStress ? 'block' : 'none';
     if (minimapFrame) minimapFrame.style.display = currentPrefs.useMinimap ? 'block' : 'none';
+    if (clockEl) clockEl.style.display = currentPrefs.showClock ? 'block' : 'none';
 
     // Reflect in panel if open
     if (panel && !panel.classList.contains('hidden')) populateSettings();
@@ -116,11 +134,38 @@ window.addEventListener('message', (e) => {
     gearEl.textContent = data.gear === 0 ? 'N' : `${data.gear}`;
     rpmEl.textContent = (data.rpm || 0).toFixed(1);
 
+    // Extra vehicle info
+    if (fuelEl) {
+      fuelEl.style.display = currentPrefs.showFuel ? 'inline-block' : 'none';
+      fuelEl.textContent = `FUEL ${data.fuel ?? 0}`;
+      fuelEl.classList.toggle('warn', (data.fuel ?? 0) <= 25);
+      fuelEl.classList.toggle('danger', (data.fuel ?? 0) <= 10);
+    }
+    if (engineEl) {
+      engineEl.style.display = currentPrefs.showEngine ? 'inline-block' : 'none';
+      engineEl.textContent = `ENG ${data.engine ?? 0}`;
+      engineEl.classList.toggle('warn', (data.engine ?? 100) <= 50);
+      engineEl.classList.toggle('danger', (data.engine ?? 100) <= 25);
+    }
+    if (indLEl && indREl) {
+      indLEl.style.display = currentPrefs.showIndicators ? 'inline-block' : 'none';
+      indREl.style.display = currentPrefs.showIndicators ? 'inline-block' : 'none';
+      indLEl.classList.toggle('on', !!data.bl);
+      indREl.classList.toggle('on', !!data.br);
+    }
+
     // Compass + minimap north
     const heading = data.heading || 0;
     compass.textContent = headingToCardinal(heading);
     if (northIndicator) {
       northIndicator.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+    }
+
+    // Clock
+    if (clockEl && currentPrefs.showClock) {
+      const hh = String(data.hour ?? 0).padStart(2, '0');
+      const mm = String(data.minute ?? 0).padStart(2, '0');
+      clockEl.textContent = `${hh}:${mm}`;
     }
 
     seatbeltEl.classList.toggle('on', !!data.seatbelt);
@@ -137,7 +182,10 @@ function populateSettings() {
   optVoice.checked = !!currentPrefs.useVoice;
   optStress.checked = !!currentPrefs.useStress;
   optMinimap.checked = !!currentPrefs.useMinimap;
-  // best effort for circle/radarOnFoot from config until we persist
+  optClock.checked = !!currentPrefs.showClock;
+  optFuel.checked = !!currentPrefs.showFuel;
+  optEngine.checked = !!currentPrefs.showEngine;
+  optIndicators.checked = !!currentPrefs.showIndicators;
   optCircle.checked = true;
   optRadarOnFoot.checked = false;
 }
@@ -148,6 +196,10 @@ btnSave?.addEventListener('click', () => {
     metric: !!optMetric.checked,
     showCompass: !!optCompass.checked,
     showStreetZone: !!optStreet.checked,
+    showClock: !!optClock.checked,
+    showFuel: !!optFuel.checked,
+    showEngine: !!optEngine.checked,
+    showIndicators: !!optIndicators.checked,
     useVoice: !!optVoice.checked,
     useStress: !!optStress.checked,
     useMinimap: !!optMinimap.checked,

@@ -200,3 +200,6 @@ html, body {
   cursor: pointer;
 }
 .btn.primary { background: #22c55e; color: #0b1117; }
+.clock { margin-left: 12px; color: var(--muted); font-weight: 600; }
+.chip.warn { color: var(--warn); }
+.chip.danger { color: var(--danger); }

@@ -9,6 +9,10 @@ Config.SeatbeltFromQB = true      -- prefer LocalPlayer.state['seatbelt'] when u
 Config.SeatbeltStateKey = 'seatbelt'
 Config.ShowCompass = true
 Config.ShowStreetZone = true
+Config.ShowClock = true
+Config.ShowFuel = true
+Config.ShowEngine = true
+Config.ShowIndicators = true
 Config.MetricSpeed = false        -- false = mph, true = km/h
 Config.HideDefaultHud = true      -- hide GTA default HUD elements
 

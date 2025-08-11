@@ -21,7 +21,6 @@ shared_scripts {
 }
 
 client_scripts {
-  'client/minimap.lua',
   'client/*.lua'
 }
 
