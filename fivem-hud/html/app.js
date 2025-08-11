@@ -40,6 +40,15 @@ const armorVal = document.getElementById('armorVal');
 const hungerVal = document.getElementById('hungerVal');
 const thirstVal = document.getElementById('thirstVal');
 
+// Enhanced element references
+const seatbeltStatus = document.getElementById('seatbeltStatus');
+const stressStatus = document.getElementById('stressStatus');
+const stressValue = document.getElementById('stressValue');
+const leftIndicator = document.getElementById('leftIndicator');
+const rightIndicator = document.getElementById('rightIndicator');
+const leftIndicatorLight = leftIndicator?.querySelector('.indicator-light');
+const rightIndicatorLight = rightIndicator?.querySelector('.indicator-light');
+
 // Settings elements
 const panel = document.getElementById('settings');
 const optVisible = document.getElementById('optVisible');
@@ -58,6 +67,7 @@ const optRadarOnFoot = document.getElementById('optRadarOnFoot');
 const btnSave = document.getElementById('btnSave');
 const btnClose = document.getElementById('btnClose');
 
+// Enhanced currentPrefs
 let currentPrefs = {
   visible: true,
   metric: false,
@@ -69,6 +79,10 @@ let currentPrefs = {
   useMinimap: true,
   circleMinimap: true,
   radarOnFoot: false,
+  showSeatbelt: true,
+  showIndicators: true,
+  showFuel: true,
+  showEngine: true,
 };
 
 window.addEventListener('message', (e) => {
@@ -88,6 +102,10 @@ window.addEventListener('message', (e) => {
     currentPrefs.useStress = !!data.useStress;
     currentPrefs.useMinimap = !!data.useMinimap;
     currentPrefs.radarOnFoot = !!data.radarOnFoot;
+    currentPrefs.showSeatbelt = !!data.showSeatbelt;
+    currentPrefs.showIndicators = !!data.showIndicators;
+    currentPrefs.showFuel = !!data.showFuel;
+    currentPrefs.showEngine = !!data.showEngine;
 
     speedUnitEl.textContent = currentPrefs.metric ? 'KMH' : 'MPH';
     document.getElementById('voice').style.display = currentPrefs.useVoice ? 'flex' : 'none';
@@ -96,6 +114,14 @@ window.addEventListener('message', (e) => {
     if (minimapFrame) minimapFrame.style.display = currentPrefs.useMinimap ? 'block' : 'none';
     if (minimapOverlay) minimapOverlay.style.display = currentPrefs.useMinimap ? 'flex' : 'none';
     if (clockEl) clockEl.style.display = currentPrefs.showClock ? 'block' : 'none';
+    if (fuelFill) fuelFill.style.display = currentPrefs.showFuel ? 'block' : 'none';
+    if (engineFill) engineFill.style.display = currentPrefs.showEngine ? 'block' : 'none';
+
+    // Update vehicle status visibility
+    if (seatbeltStatus) seatbeltStatus.style.display = currentPrefs.showSeatbelt ? 'flex' : 'none';
+    if (stressStatus) stressStatus.style.display = currentPrefs.useStress ? 'flex' : 'none';
+    if (leftIndicator) leftIndicator.style.display = currentPrefs.showIndicators ? 'flex' : 'none';
+    if (rightIndicator) rightIndicator.style.display = currentPrefs.showIndicators ? 'flex' : 'none';
 
     if (panel && !panel.classList.contains('hidden')) populateSettings();
     return;
@@ -161,16 +187,27 @@ window.addEventListener('message', (e) => {
     if (armorVal) armorVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.armor || 0)))}`;
     
     // Update ring visual states
-    if (ringHp) ringHp.style.setProperty('--hp', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
-    if (ringArmor) ringArmor.style.setProperty('--arm', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
+    if (ringHp) ringHp.style.setProperty('--value', `${Math.max(0, Math.min(100, data.hp || 0))}`);
+    if (ringArmor) ringArmor.style.setProperty('--value', `${Math.max(0, Math.min(100, data.armor || 0))}`);
     
     // Hunger and thirst placeholders (if not wired to QBCore)
     const hun = Math.max(0, Math.min(100, Math.round(data.hunger ?? 100)));
     const thr = Math.max(0, Math.min(100, Math.round(data.thirst ?? 100)));
     if (hungerVal) hungerVal.textContent = `${hun}`;
     if (thirstVal) thirstVal.textContent = `${thr}`;
-    if (ringHunger) ringHunger.style.setProperty('--hun', `${hun}%`);
-    if (ringThirst) ringThirst.style.setProperty('--thr', `${thr}%`);
+    if (ringHunger) ringHunger.style.setProperty('--value', `${hun}`);
+    if (ringThirst) ringThirst.style.setProperty('--value', `${thr}`);
+
+    // Update mini-rings as well
+    const ringHp2 = document.getElementById('ringHp2');
+    const ringArmor2 = document.getElementById('ringArmor2');
+    const ringHunger2 = document.getElementById('ringHunger2');
+    const ringThirst2 = document.getElementById('ringThirst2');
+    
+    if (ringHp2) ringHp2.style.setProperty('--value', `${Math.max(0, Math.min(100, data.hp || 0))}`);
+    if (ringArmor2) ringArmor2.style.setProperty('--value', `${Math.max(0, Math.min(100, data.armor || 0))}`);
+    if (ringHunger2) ringHunger2.style.setProperty('--value', `${hun}`);
+    if (ringThirst2) ringThirst2.style.setProperty('--value', `${thr}`);
     
     // Update compass and minimap north
     const heading = data.heading || 0;
@@ -184,7 +221,23 @@ window.addEventListener('message', (e) => {
         minimapNorth.style.transform = `translateX(-50%) rotate(${heading}deg)`;
       }
     }
-    
+
+    // Update stress status
+    if (stressStatus && stressValue && currentPrefs.useStress) {
+      const stressLevel = data.stress || 0;
+      stressValue.textContent = `${Math.round(stressLevel)}%`;
+      
+      // Update stress status colors
+      stressStatus.classList.remove('low', 'medium', 'high');
+      if (stressLevel < 30) {
+        stressStatus.classList.add('low');
+      } else if (stressLevel < 70) {
+        stressStatus.classList.add('medium');
+      } else {
+        stressStatus.classList.add('high');
+      }
+    }
+
     // Update clock
     if (clockEl && currentPrefs.showClock) {
       const hh = String(data.hour ?? 0).padStart(2, '0');
@@ -220,6 +273,25 @@ window.addEventListener('message', (e) => {
       engineFill.style.height = `${enginePercent}%`;
       engineText.textContent = `${Math.round(enginePercent)}%`;
     }
+
+    // Update vehicle indicators
+    if (leftIndicatorLight && rightIndicatorLight) {
+      leftIndicatorLight.classList.toggle('active', !!data.bl);
+      rightIndicatorLight.classList.toggle('active', !!data.br);
+    }
+
+    // Update seatbelt status
+    if (seatbeltStatus) {
+      seatbeltStatus.classList.remove('active', 'inactive');
+      if (data.seatbelt) {
+        seatbeltStatus.classList.add('active');
+        seatbeltStatus.querySelector('.status-icon').textContent = '🔒';
+      } else {
+        seatbeltStatus.classList.add('inactive');
+        seatbeltStatus.querySelector('.status-icon').textContent = '⚠️';
+      }
+    }
+
     return;
   }
 });
@@ -234,8 +306,11 @@ function populateSettings() {
   optStress.checked = !!currentPrefs.useStress;
   optMinimap.checked = !!currentPrefs.useMinimap;
   optClock.checked = !!currentPrefs.showClock;
-  optCircle.checked = true;
-  optRadarOnFoot.checked = false;
+  optFuel.checked = !!currentPrefs.showFuel;
+  optEngine.checked = !!currentPrefs.showEngine;
+  optIndicators.checked = !!currentPrefs.showIndicators;
+  optCircle.checked = !!currentPrefs.circleMinimap;
+  optRadarOnFoot.checked = !!currentPrefs.radarOnFoot;
 }
 
 btnSave?.addEventListener('click', () => {
@@ -248,12 +323,20 @@ btnSave?.addEventListener('click', () => {
     useVoice: !!optVoice.checked,
     useStress: !!optStress.checked,
     useMinimap: !!optMinimap.checked,
+    showFuel: !!optFuel.checked,
+    showEngine: !!optEngine.checked,
+    showIndicators: !!optIndicators.checked,
     circleMinimap: !!optCircle.checked,
     radarOnFoot: !!optRadarOnFoot.checked,
   };
-  fetch(`https://fivem-hud/applySettings`, { method: 'POST', body: JSON.stringify(payload) })
-    .then(() => { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); })
-    .catch(() => {});
+  
+  fetch(`https://${GetParentResourceName()}/applySettings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  
+  panel.classList.add('hidden');
 });
 
 btnClose?.addEventListener('click', () => { panel.classList.add('hidden'); fetch(`https://fivem-hud/close`, { method: 'POST', body: '{}' }).catch(() => {}); });

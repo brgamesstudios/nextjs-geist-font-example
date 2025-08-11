@@ -37,19 +37,18 @@ CreateThread(function()
   SendNUIMessage({
     action = 'config',
     metric = Prefs.MetricSpeed,
-    speedWarn = Config.SpeedWarn,
-    speedDanger = Config.SpeedDanger,
     showCompass = Prefs.ShowCompass,
     showStreetZone = Prefs.ShowStreetZone,
     showClock = Prefs.ShowClock,
-    showFuel = Prefs.ShowFuel,
-    showEngine = Prefs.ShowEngine,
-    showIndicators = Prefs.ShowIndicators,
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,
     useMinimap = Prefs.UseMinimap,
-    radarOnFoot = Config.RadarOnFoot
+    radarOnFoot = Config.RadarOnFoot,
+    showSeatbelt = Prefs.UseSeatbelt,
+    showIndicators = true,
+    showFuel = true,
+    showEngine = true
   })
 end)
 
@@ -174,21 +173,6 @@ CreateThread(function()
     Wait(Config.StreetRefreshMs)
   end
 end)
-
-local function getVehicleFuelLevel(veh)
-  if QBCore and GetResourceState('qb-fuel') == 'started' then
-    if exports['qb-fuel'] and exports['qb-fuel'].GetFuel then
-      local ok, val = pcall(function() return exports['qb-fuel']:GetFuel(veh) end)
-      if ok and type(val) == 'number' then return val end
-    end
-  end
-  -- fallback to native if present
-  if DoesEntityExist(veh) then
-    local level = GetVehicleFuelLevel(veh)
-    if type(level) == 'number' then return level end
-  end
-  return 0
-end
 
 -- Track vehicle state
 local isInVehicle = false
@@ -353,19 +337,18 @@ RegisterNUICallback('applySettings', function(data, cb)
   SendNUIMessage({
     action = 'config',
     metric = Prefs.MetricSpeed,
-    speedWarn = Config.SpeedWarn,
-    speedDanger = Config.SpeedDanger,
     showCompass = Prefs.ShowCompass,
     showStreetZone = Prefs.ShowStreetZone,
     showClock = Prefs.ShowClock,
-    showFuel = Prefs.ShowFuel,
-    showEngine = Prefs.ShowEngine,
-    showIndicators = Prefs.ShowIndicators,
     useVoice = Prefs.UseVoice,
     useSeatbelt = Prefs.UseSeatbelt,
     useStress = Prefs.UseStress,
     useMinimap = Prefs.UseMinimap,
-    radarOnFoot = Config.RadarOnFoot
+    radarOnFoot = Config.RadarOnFoot,
+    showSeatbelt = Prefs.UseSeatbelt,
+    showIndicators = true,
+    showFuel = true,
+    showEngine = true
   })
 
   -- Notify minimap controller
