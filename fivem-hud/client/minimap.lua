@@ -10,13 +10,28 @@ local function setupCircleMinimap()
   SetMinimapClipType(1)
   local w = 0.18 * MM_Scale
   local h = 0.30 * MM_Scale
+  -- Position GTA's radar behind our overlay
   SetMinimapComponentPosition('minimap', 'L', 'B', 0.015, 0.02, w, h)
   SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
   SetMinimapComponentPosition('minimap_blur', 'L', 'B', 0.00, 0.00, 0.25 * MM_Scale, 0.35 * MM_Scale)
+  
+  -- Show radar components
+  SetMinimapComponentPosition('minimap_compass', 'L', 'B', 0.015, 0.02, w, h)
+  SetMinimapComponentPosition('minimap_compass_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
 end
 
 local function setupSquareMinimap()
   SetMinimapClipType(0)
+  local w = 0.18 * MM_Scale
+  local h = 0.30 * MM_Scale
+  -- Position GTA's radar behind our overlay
+  SetMinimapComponentPosition('minimap', 'L', 'B', 0.015, 0.02, w, h)
+  SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
+  SetMinimapComponentPosition('minimap_blur', 'L', 'B', 0.00, 0.00, 0.25 * MM_Scale, 0.35 * MM_Scale)
+  
+  -- Show radar components
+  SetMinimapComponentPosition('minimap_compass', 'L', 'B', 0.015, 0.02, w, h)
+  SetMinimapComponentPosition('minimap_compass_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
 end
 
 RegisterNetEvent('fivem-hud:applyPrefs', function(p)
@@ -47,6 +62,15 @@ CreateThread(function()
       local show = (MM_ShowDefault and (MM_RadarAlwaysOn or inVehicle or MM_RadarOnFoot))
       DisplayRadar(show)
       if show and MM_RadarZoom then SetRadarZoom(MM_RadarZoom) end
+      
+      -- Ensure minimap components are visible
+      if show then
+        SetMinimapComponentPosition('minimap', 'L', 'B', 0.015, 0.02, 0.18 * MM_Scale, 0.30 * MM_Scale)
+        SetMinimapComponentPosition('minimap_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
+        SetMinimapComponentPosition('minimap_blur', 'L', 'B', 0.00, 0.00, 0.25 * MM_Scale, 0.35 * MM_Scale)
+        SetMinimapComponentPosition('minimap_compass', 'L', 'B', 0.015, 0.02, 0.18 * MM_Scale, 0.30 * MM_Scale)
+        SetMinimapComponentPosition('minimap_compass_mask', 'L', 'B', 0.155, 0.12, 0.08 * MM_Scale, 0.16 * MM_Scale)
+      end
     else
       DisplayRadar(false)
     end

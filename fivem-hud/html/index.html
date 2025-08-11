@@ -56,13 +56,32 @@
       </div>
       <div class="right">
         <div class="speedo" id="speedo">
-          <svg viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" class="sp-bg" />
-            <circle cx="60" cy="60" r="52" class="sp-fg" id="speedArc" />
-          </svg>
+          <div class="speedo-fuel" id="fuelIndicator">
+            <div class="fuel-icon">⛽</div>
+            <div class="fuel-bar">
+              <div class="fuel-fill" id="fuelFill"></div>
+            </div>
+            <div class="fuel-text" id="fuelText">100%</div>
+          </div>
+          
           <div class="speedo-center">
-            <div class="speed-main"><span id="speedNum">0</span><small id="speedUnit">MPH</small></div>
-            <div class="speed-gear" id="speedGear">N</div>
+            <svg class="speedo-svg" viewBox="0 0 120 120">
+              <circle class="speedo-bg" cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
+              <circle class="speedo-arc" id="speedArc" cx="60" cy="60" r="54" fill="none" stroke="#00ff88" stroke-width="8" stroke-linecap="round" stroke-dasharray="326" stroke-dashoffset="326" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="speedo-text">
+              <div class="speed-num" id="speedNum">0</div>
+              <div class="speed-unit" id="speedUnit">MPH</div>
+              <div class="speed-gear" id="speedGear">N</div>
+            </div>
+          </div>
+          
+          <div class="speedo-engine" id="engineIndicator">
+            <div class="engine-icon">🔧</div>
+            <div class="engine-bar">
+              <div class="engine-fill" id="engineFill"></div>
+            </div>
+            <div class="engine-text" id="engineText">100%</div>
           </div>
         </div>
       </div>

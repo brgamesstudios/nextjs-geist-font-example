@@ -24,6 +24,12 @@ const speedNum = document.getElementById('speedNum');
 const speedUnitEl = document.getElementById('speedUnit');
 const speedGearEl = document.getElementById('speedGear');
 
+// Fuel and engine indicators
+const fuelFill = document.getElementById('fuelFill');
+const fuelText = document.getElementById('fuelText');
+const engineFill = document.getElementById('engineFill');
+const engineText = document.getElementById('engineText');
+
 // right rings
 const ringHp = document.getElementById('ringHp');
 const ringArmor = document.getElementById('ringArmor');
@@ -137,6 +143,19 @@ window.addEventListener('message', (e) => {
     const fraction = Math.max(0, Math.min(1, (data.speed || 0) / maxSpeed));
     const totalLen = 326;
     speedArc.style.strokeDashoffset = `${totalLen - totalLen * fraction}`;
+
+    // Fuel and engine indicators
+    if (fuelFill && fuelText) {
+      const fuelPercent = Math.max(0, Math.min(100, data.fuel || 100));
+      fuelFill.style.height = `${fuelPercent}%`;
+      fuelText.textContent = `${Math.round(fuelPercent)}%`;
+    }
+    
+    if (engineFill && engineText) {
+      const enginePercent = Math.max(0, Math.min(100, data.engine || 100));
+      engineFill.style.height = `${enginePercent}%`;
+      engineText.textContent = `${Math.round(enginePercent)}%`;
+    }
 
     // Right rings
     hpVal.textContent = `${Math.max(0, Math.min(100, Math.round(data.hp || 0)))}`;

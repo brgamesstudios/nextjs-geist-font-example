@@ -151,12 +151,13 @@ html, body {
   height: min(20.5vw, 360px);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+  background: transparent;
+  backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .minimap-overlay {
@@ -166,6 +167,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .minimap-north {
@@ -273,20 +275,109 @@ html, body {
 .top-right .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 
 .speedo {
-  width: 240px;
-  height: 240px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.speedo-fuel, .speedo-engine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 60px;
+}
+
+.fuel-icon, .engine-icon {
+  font-size: 20px;
+  color: #fff;
+}
+
+.fuel-bar, .engine-bar {
+  width: 8px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
   position: relative;
-  background: transparent;
-  margin-bottom: 0;
 }
-.speedo svg { transform: rotate(135deg); width: 100%; height: 100%; }
-.sp-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 10; stroke-linecap: round; }
-.sp-fg { fill: none; stroke: #22c55e; stroke-width: 10; stroke-linecap: round; stroke-dasharray: 326; stroke-dashoffset: 326; }
+
+.fuel-fill, .engine-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: height 0.3s ease;
+}
+
+.fuel-fill {
+  background: linear-gradient(to top, #ff6b6b, #ffd93d, #6bcf7f);
+}
+
+.engine-fill {
+  background: linear-gradient(to top, #ff6b6b, #ffd93d, #6bcf7f);
+}
+
+.fuel-text, .engine-text {
+  font-size: 10px;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .speedo-center {
-  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.speed-main { font-size: 44px; font-weight: 800; display: flex; gap: 8px; align-items: baseline; }
-.speed-gear { margin-top: 6px; font-weight: 700; color: var(--muted); }
+
+.speedo-svg {
+  width: 120px;
+  height: 120px;
+}
+
+.speedo-bg {
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.speedo-arc {
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.speedo-text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.speed-num {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.speed-unit {
+  font-size: 10px;
+  color: #ccc;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.speed-gear {
+  font-size: 16px;
+  font-weight: bold;
+  color: #00ff88;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
 
 .rings { display: flex; flex-direction: row; gap: 12px; align-items: flex-end; justify-content: flex-start; flex-wrap: nowrap; margin-bottom: 4px; }
 .ring { width: 90px; height: 90px; position: relative; }
