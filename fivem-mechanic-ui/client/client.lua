@@ -3,6 +3,26 @@ local RESOURCE_NAME = GetCurrentResourceName()
 local isUiOpen = false
 local cachedVehicle = 0
 
+local QBCore = nil
+CreateThread(function()
+    if Config.Framework and Config.Framework.UseQBCore then
+        pcall(function()
+            QBCore = exports['qb-core']:GetCoreObject()
+        end)
+    end
+end)
+
+local function notify(message, msgType)
+    if QBCore and QBCore.Functions and QBCore.Functions.Notify then
+        QBCore.Functions.Notify(message, msgType or 'primary')
+    else
+        -- basic fallback
+        BeginTextCommandThefeedPost('STRING')
+        AddTextComponentSubstringPlayerName(message)
+        EndTextCommandThefeedPostTicker(false, false)
+    end
+end
+
 local function requestControlOfEntity(entity)
     if not DoesEntityExist(entity) then return false end
     local attempts = 0
@@ -250,4 +270,8 @@ RegisterNUICallback('toggleExtra', function(body, cb)
     end
 
     cb({ ok = true })
+end)
+
+RegisterNetEvent('fmu:client:notAllowed', function(reason)
+    notify(reason or 'You are not allowed to use this', 'error')
 end)

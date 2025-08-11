@@ -14,3 +14,12 @@ Config.AllowEveryone = true
 
 -- Distance to interact with nearest vehicle when not inside one
 Config.MaxVehicleDistance = 5.0
+
+-- Framework integration (QBCore)
+Config.Framework = {
+  UseQBCore = true,                -- Enable QBCore checks
+  MechanicJobRequired = true,      -- Require being a mechanic to open UI
+  JobName = 'mechanic',            -- QBCore job name
+  OnDutyRequired = true,           -- Require on-duty
+  AllowedGrades = {}               -- Empty = any grade. You can set { [0]=true, [1]=true } or { trainee=true, boss=true }
+}

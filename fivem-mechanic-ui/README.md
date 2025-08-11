@@ -1,4 +1,4 @@
-# FiveM Mechanic UI (Standalone)
+# FiveM Mechanic UI (Standalone / QBCore)
 
 A simple NUI-based mechanic interface for FiveM to repair, clean, tweak colors, extras, and basic performance mods.
 
@@ -11,20 +11,26 @@ A simple NUI-based mechanic interface for FiveM to repair, clean, tweak colors, 
 ensure fivem-mechanic-ui
 ```
 
-3. (Optional) Configure permissions in `config.lua`:
-   - `Config.AllowEveryone = true` (default) lets anyone open it
-   - Set `Config.RequireAcePermission = true` and grant ACE:
+## Configuration
 
-```
-add_ace group.admin mechanic.ui allow
-# or for a specific identifier:
-add_principal identifier.steam:110000112345678 group.admin
-```
+Edit `config.lua`.
+
+- General:
+  - `Config.AllowEveryone` and `Config.RequireAcePermission` for standalone ACE mode
+- QBCore:
+  - `Config.Framework.UseQBCore = true`
+  - `Config.Framework.MechanicJobRequired = true`
+  - `Config.Framework.JobName = 'mechanic'` (adjust to your job name)
+  - `Config.Framework.OnDutyRequired = true`
+  - `Config.Framework.AllowedGrades = {}` (empty = any grade; or set keys like `[0]=true` or `boss=true`)
+
+> Note: If QBCore is enabled but not found, access falls back to standalone config.
 
 ## Usage
 
 - Press F6 or run `/mekanik` or `/mechanicui` to open the UI.
 - Must be in a vehicle or within 5 meters of one.
+- If QBCore gating is enabled, players must meet job rules (and be on duty if required).
 
 ## Features
 
@@ -35,6 +41,6 @@ add_principal identifier.steam:110000112345678 group.admin
 
 ## Notes
 
-- This is standalone and does not require any framework.
-- Changes are applied immediately and are not persisted to garages.
-- You may adapt for job restrictions by swapping ACE checks or integrating with your framework.
+- Standalone and QBCore-friendly
+- Changes are applied immediately and are not persisted to garages
+- You can integrate with your own billing/parts/inventory systems by hooking into NUI callbacks on the client/server
