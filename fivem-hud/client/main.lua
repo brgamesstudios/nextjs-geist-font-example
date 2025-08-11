@@ -4,6 +4,17 @@ local lastZone = ''
 local seatbeltOn = false
 local voiceLevel = 0
 local playerTalking = false
+local qbStress = 0
+local QBCore = nil
+
+-- Try to get QBCore if available
+CreateThread(function()
+  if GetResourceState('qb-core') == 'started' then
+    pcall(function()
+      QBCore = exports['qb-core']:GetCoreObject()
+    end)
+  end
+end)
 
 CreateThread(function()
   Wait(0)
@@ -17,21 +28,55 @@ CreateThread(function()
     showCompass = Config.ShowCompass,
     showStreetZone = Config.ShowStreetZone,
     useVoice = Config.UseVoice,
-    useSeatbelt = Config.UseSeatbelt
+    useSeatbelt = Config.UseSeatbelt,
+    useStress = Config.UseStress
   })
 end)
 
--- Toggle command and key mapping
+-- QBCore stress sync
+if Config.UseStress then
+  CreateThread(function()
+    while true do
+      if QBCore and QBCore.Functions and QBCore.Functions.GetPlayerData then
+        local data = QBCore.Functions.GetPlayerData()
+        if data and data.metadata and data.metadata['stress'] ~= nil then
+          qbStress = tonumber(data.metadata['stress']) or 0
+        end
+      end
+      Wait(500)
+    end
+  end)
+end
+
+-- Seatbelt from QBCore state bag (optional)
+if Config.UseSeatbelt and Config.SeatbeltFromQB then
+  CreateThread(function()
+    while true do
+      local state = LocalPlayer and LocalPlayer.state
+      if state then
+        local key = Config.SeatbeltStateKey or 'seatbelt'
+        local val = state[key]
+        if type(val) == 'boolean' then
+          seatbeltOn = val
+        end
+      end
+      Wait(200)
+    end
+  end)
+end
+
+-- Toggle command and key mapping (fallback if no QB state)
 RegisterCommand('hud', function()
   isHudVisible = not isHudVisible
   SendNUIMessage({ action = 'setVisible', visible = isHudVisible })
 end, false)
 RegisterKeyMapping('hud', 'Toggle HUD', 'keyboard', Config.ToggleKey or 'H')
 
--- Seatbelt toggle
 RegisterCommand('seatbelt', function()
-  seatbeltOn = not seatbeltOn
-  SendNUIMessage({ action = 'seatbelt', on = seatbeltOn })
+  if not (Config.UseSeatbelt and Config.SeatbeltFromQB) then
+    seatbeltOn = not seatbeltOn
+    SendNUIMessage({ action = 'seatbelt', on = seatbeltOn })
+  end
 end, false)
 RegisterKeyMapping('seatbelt', 'Toggle Seatbelt', 'keyboard', 'B')
 
@@ -41,8 +86,6 @@ if Config.UseVoice then
     while true do
       local playerId = PlayerId()
       playerTalking = NetworkIsPlayerTalking(playerId)
-      -- 0=whisper,1=normal,2=shout if using basic Mumble ranges; real voice resources can fire exports/events
-      -- Keep a placeholder level for UI coloring
       voiceLevel = playerTalking and 1 or 0
       SendNUIMessage({ action = 'voice', talking = playerTalking, level = voiceLevel })
       Wait(150)
@@ -88,7 +131,6 @@ CreateThread(function()
   while true do
     if isHudVisible then
       local ped = PlayerPedId()
-      local player = PlayerId()
       local hp = math.floor((GetEntityHealth(ped) - 100) / (GetEntityMaxHealth(ped) - 100) * 100)
       if hp < 0 then hp = 0 end
       local armor = GetPedArmour(ped)
@@ -110,13 +152,13 @@ CreateThread(function()
         rpm = GetVehicleCurrentRpm(veh) or 0
       end
 
-      local heading = GetEntityHeading(ped) -- 0-360
+      local heading = GetEntityHeading(ped)
 
       SendNUIMessage({
         action = 'tick',
         hp = hp,
         armor = armor,
-        stress = 0, -- wire with your framework if needed
+        stress = Config.UseStress and qbStress or 0,
         inVehicle = inVehicle,
         speed = speed,
         gear = gear,
@@ -129,7 +171,6 @@ CreateThread(function()
   end
 end)
 
--- NUI focus not required, but provide callbacks if needed
 RegisterNUICallback('ready', function(_, cb)
   cb('ok')
 end)

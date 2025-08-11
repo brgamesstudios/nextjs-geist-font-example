@@ -11,6 +11,8 @@ const gearEl = document.getElementById('gear');
 const rpmEl = document.getElementById('rpm');
 const seatbeltEl = document.getElementById('seatbelt');
 const vehicleBlock = document.getElementById('vehicleBlock');
+const stressBar = document.getElementById('stressBar');
+const stressText = document.getElementById('stressText');
 
 window.addEventListener('message', (e) => {
   const data = e.data || {};
@@ -26,6 +28,7 @@ window.addEventListener('message', (e) => {
     document.getElementById('voice').style.display = data.useVoice ? 'flex' : 'none';
     document.getElementById('compass').style.display = data.showCompass ? 'block' : 'none';
     document.getElementById('street').style.display = data.showStreetZone ? 'block' : 'none';
+    if (stressBar) stressBar.style.display = data.useStress ? 'block' : 'none';
     return;
   }
   if (data.action === 'street') {
@@ -48,9 +51,15 @@ window.addEventListener('message', (e) => {
     document.querySelector('.bar.hp').style.setProperty('--hpw', `${Math.max(0, Math.min(100, data.hp || 0))}%`);
     document.querySelector('.bar.armor').style.setProperty('--armw', `${Math.max(0, Math.min(100, data.armor || 0))}%`);
 
+    // Stress
+    if (stressBar) {
+      const s = Math.max(0, Math.min(100, Math.round(data.stress || 0)));
+      stressText.textContent = `${s}`;
+      stressBar.style.setProperty('--stw', `${s}%`);
+    }
+
     // Vehicle
     vehicleBlock.style.display = data.inVehicle ? 'flex' : 'none';
-    const isMetric = speedUnitEl.textContent === 'KMH';
     speedUnitEl.textContent = (window.metricSpeed || false) ? 'KMH' : 'MPH';
     speedEl.textContent = `${data.speed || 0}`;
 
@@ -82,7 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
   fetch(`https://fivem-hud/ready`, { method: 'POST', body: '{}' }).catch(() => {});
 });
 
-// Exposed config from Lua via convar replacements not available; use post-init defaults
+// Defaults
 window.metricSpeed = false;
 window.speedWarn = 80;
 window.speedDanger = 120;

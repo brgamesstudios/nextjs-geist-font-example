@@ -2,9 +2,11 @@ Config = {}
 
 -- General
 Config.ToggleKey = 'H'            -- default HUD toggle key (also has /hud command)
-Config.UseStress = false          -- if you use a stress framework, wire in client.lua
+Config.UseStress = true           -- QBCore: uses PlayerData.metadata.stress if available
 Config.UseVoice = true            -- show voice indicator box
 Config.UseSeatbelt = true         -- show seatbelt indicator when in vehicle
+Config.SeatbeltFromQB = true      -- prefer LocalPlayer.state['seatbelt'] when using QBCore
+Config.SeatbeltStateKey = 'seatbelt'
 Config.ShowCompass = true
 Config.ShowStreetZone = true
 Config.MetricSpeed = false        -- false = mph, true = km/h
