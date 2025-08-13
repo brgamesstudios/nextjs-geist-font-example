@@ -195,6 +195,7 @@ end)
 
 -- Main HUD update thread
 CreateThread(function()
+  print('Main HUD update thread started')
   while true do
     local ped = PlayerPedId()
     local currentVehicleState = IsPedInAnyVehicle(ped, false)
@@ -244,6 +245,7 @@ CreateThread(function()
         end
         
         -- Send vehicle data to NUI
+        print('Sending tick message with inVehicle=true, speed=' .. math.floor(speed) .. ', gear=' .. gear .. ', fuel=' .. fuel .. ', engine=' .. engine)
         SendNUIMessage({
           action = 'tick',
           inVehicle = true,
@@ -259,6 +261,7 @@ CreateThread(function()
       end
     else
       -- Player is not in vehicle, send empty vehicle data
+      print('Sending tick message with inVehicle=false')
       SendNUIMessage({
         action = 'tick',
         inVehicle = false,

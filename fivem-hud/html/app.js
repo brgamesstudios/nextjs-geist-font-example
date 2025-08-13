@@ -214,9 +214,19 @@ function updateVehicleStatus(data) {
 
 // Update speedometer
 function updateSpeedometer(data) {
+    console.log('updateSpeedometer called with data:', JSON.stringify(data, null, 2));
+    console.log('data.inVehicle:', data.inVehicle);
+    console.log('data.inVehicle type:', typeof data.inVehicle);
+    console.log('data.inVehicle !== undefined:', data.inVehicle !== undefined);
+    
     // Check if player is in vehicle (either from inVehicle flag or from vehicle data)
     const isInVehicle = data.inVehicle !== undefined ? data.inVehicle : (data.gear > 0 || data.fuel > 0 || data.engine > 0);
-    if (!isInVehicle) return;
+    console.log('Calculated isInVehicle:', isInVehicle);
+    
+    if (!isInVehicle) {
+        console.log('Player not in vehicle, returning early');
+        return;
+    }
     
     console.log('Updating speedometer:', JSON.stringify(data, null, 2));
     console.log('Speedometer elements check:', {
@@ -421,6 +431,9 @@ window.addEventListener('message', (e) => {
             break;
             
         case 'tick':
+            console.log('Processing tick message:', JSON.stringify(data, null, 2));
+            console.log('inVehicle value:', data.inVehicle);
+            console.log('data type:', typeof data.inVehicle);
             updateSpeedometer(data);
             updateVehicleStatus(data);
             break;
