@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiveM HUD</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- JG Scripts Style HUD -->
+    <div class="hud" id="hud">
+        <!-- Top Right - Player Info -->
+        <div class="top-right">
+            <div class="row">
+                <div class="chip" id="playerId">ID: 0</div>
+                <div class="chip" id="cash">$0</div>
+                <div class="chip" id="bank">$0</div>
+            </div>
+            <div class="row" style="margin-top: 8px;">
+                <div class="clock" id="clock">00:00</div>
+            </div>
+        </div>
+
+        <!-- Top Center - Compass, Street, Voice -->
+        <div class="top">
+            <div id="compass">N</div>
+            <div id="street">Unknown Street</div>
+            <div class="voice" id="voice">
+                <div class="dot"></div>
+                <span>VOICE</span>
+            </div>
+        </div>
+
+        <!-- Left Side - Minimap & Mini Rings -->
+        <div class="minimap-frame">
+            <div class="minimap-overlay" id="minimapOverlay">
+                <div class="minimap-north" id="northIndicator">N</div>
+                <div class="minimap-street" id="minimapStreet">Unknown Street</div>
+                <div class="minimap-zone" id="minimapZone">Unknown Zone</div>
+            </div>
+        </div>
+
+        <!-- Mini Rings - Health, Armor, Hunger, Thirst -->
+        <div class="mini-rings">
+            <div class="mini-ring ring-hp">
+                <div class="ring-inner">
+                    <span>HP</span>
+                    <div id="miniHp">100</div>
+                </div>
+            </div>
+            <div class="mini-ring ring-armor">
+                <div class="ring-inner">
+                    <span>ARMOR</span>
+                    <div id="miniArmor">0</div>
+                </div>
+            </div>
+            <div class="mini-ring ring-hunger">
+                <div class="ring-inner">
+                    <span>FOOD</span>
+                    <div id="miniHunger">100</div>
+                </div>
+            </div>
+            <div class="mini-ring ring-thirst">
+                <div class="ring-inner">
+                    <span>WATER</span>
+                    <div id="miniThirst">100</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="bottom">
+            <!-- Left Side - Large Rings -->
+            <div class="left">
+                <div class="rings">
+                    <div class="ring ring-hp">
+                        <div class="ring-inner">
+                            <span>HEALTH</span>
+                            <div id="hp">100</div>
+                        </div>
+                    </div>
+                    <div class="ring ring-armor">
+                        <div class="ring-inner">
+                            <span>ARMOR</span>
+                            <div id="armor">0</div>
+                        </div>
+                    </div>
+                    <div class="ring ring-hunger">
+                        <div class="ring-inner">
+                            <span>FOOD</span>
+                            <div id="hunger">100</div>
+                        </div>
+                    </div>
+                    <div class="ring ring-thirst">
+                        <div class="ring-inner">
+                            <span>WATER</span>
+                            <div id="thirst">100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Speedometer -->
+            <div class="right">
+                <div class="speedo" id="speedo">
+                    <div class="speedo-fuel">
+                        <div class="fuel-icon">⛽</div>
+                        <div class="fuel-bar">
+                            <div class="fuel-fill" id="fuelFill"></div>
+                        </div>
+                        <div class="fuel-text" id="fuelText">100%</div>
+                    </div>
+                    
+                    <div class="speedo-center">
+                        <svg class="speedo-svg" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="url(#speedGradient)" stroke-width="8" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" id="speedArc"/>
+                        </svg>
+                        <div class="speedo-text">
+                            <div class="speed-num" id="speed">0</div>
+                            <div class="speed-unit">KM/H</div>
+                            <div class="speed-gear" id="gear">N</div>
+                        </div>
+                    </div>
+                    
+                    <div class="speedo-engine">
+                        <div class="engine-icon">🔧</div>
+                        <div class="engine-bar">
+                            <div class="engine-fill" id="engineFill"></div>
+                        </div>
+                        <div class="engine-text" id="engineText">100%</div>
+                    </div>
+                </div>
+
+                <!-- Vehicle Status Indicators Below Speedometer -->
+                <div class="vehicle-status-below" id="vehicleStatusBelow">
+                    <div class="status-item-below" id="seatbeltStatusBelow">
+                        <div class="status-icon-below">🔒</div>
+                        <div class="status-text-below">SEATBELT</div>
+                    </div>
+                    <div class="status-item-below" id="stressStatusBelow">
+                        <div class="status-icon-below">😰</div>
+                        <div class="status-text-below">STRESS</div>
+                        <div class="status-value-below" id="stressValueBelow">0%</div>
+                    </div>
+                    <div class="status-item-below" id="leftIndicatorBelow">
+                        <div class="indicator-light-below left"></div>
+                        <div class="status-text-below">LEFT</div>
+                    </div>
+                    <div class="status-item-below" id="rightIndicatorBelow">
+                        <div class="indicator-light-below right"></div>
+                        <div class="status-text-below">RIGHT</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings" id="settings">
+        <div class="settings-card">
+            <div class="settings-header">
+                <h3>HUD Settings</h3>
+            </div>
+            <div class="settings-body">
+                <label>
+                    <input type="checkbox" id="showClock" checked>
+                    Show Clock
+                </label>
+                <label>
+                    <input type="checkbox" id="showCompass" checked>
+                    Show Compass
+                </label>
+                <label>
+                    <input type="checkbox" id="showStreet" checked>
+                    Show Street
+                </label>
+                <label>
+                    <input type="checkbox" id="showVoice" checked>
+                    Show Voice
+                </label>
+                <label>
+                    <input type="checkbox" id="showMinimap" checked>
+                    Show Minimap
+                </label>
+                <label>
+                    <input type="checkbox" id="showRings" checked>
+                    Show Health Rings
+                </label>
+                <label>
+                    <input type="checkbox" id="showSpeedo" checked>
+                    Show Speedometer
+                </label>
+                <label>
+                    <input type="checkbox" id="showFuel" checked>
+                    Show Fuel
+                </label>
+                <label>
+                    <input type="checkbox" id="showEngine" checked>
+                    Show Engine
+                </label>
+                <label>
+                    <input type="checkbox" id="showSeatbelt" checked>
+                    Show Seatbelt
+                </label>
+                <label>
+                    <input type="checkbox" id="showIndicators" checked>
+                    Show Indicators
+                </label>
+                <label>
+                    <input type="checkbox" id="radarOnFoot" checked>
+                    Radar on Foot
+                </label>
+            </div>
+            <div class="settings-footer">
+                <button class="btn" id="closeSettings">Close</button>
+                <button class="btn primary" id="saveSettings">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
